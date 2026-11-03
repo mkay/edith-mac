@@ -39,7 +39,7 @@ private final class EventLog {
         let log = EventLog(bridge)
 
         // Queued before "ready", replayed after it, as in the Linux app.
-        bridge.initEditor(content: "{\"a\": 1}\n", language: "json")
+        bridge.load("{\"a\": 1}\n", language: "json", configuration: .init())
         try await log.wait { $0 == .ready }
         try await log.wait { if case .initComplete(let eol, _) = $0 { eol == "lf" } else { false } }
 
@@ -68,7 +68,7 @@ private final class EventLog {
     @Test func languageWorkersStart() async throws {
         let bridge = EditorBridge()
         let log = EventLog(bridge)
-        bridge.initEditor(content: "{\"a\": }\n", language: "json")
+        bridge.load("{\"a\": }\n", language: "json", configuration: .init())
         try await log.wait { if case .initComplete = $0 { true } else { false } }
 
         var markers = 0
@@ -89,4 +89,33 @@ private final class EventLog {
         #expect(handler.fileURL(for: URL(string: "edith://monaco/vs/%2E%2E/%2E%2E/%2E%2E/etc/passwd")!) == nil)
         #expect(handler.fileURL(for: URL(string: "edith://other/editor.html")!) == nil)
     }
+
+    @Test func customOptionsPassThroughAsJSON() async throws {
+        let bridge = EditorBridge()
+        let log = EventLog(bridge)
+        var config = EditorConfiguration()
+        config.customOptionsJSON = #"{"cursorStyle": "block", "html.format.wrapLineLength": 0}"#
+        bridge.load("x", language: "html", configuration: config)
+        try await log.wait { if case .initComplete = $0 { true } else { false } }
+        let style = try await bridge.evaluate("monaco.editor.getEditors()[0].getRawOptions().cursorStyle") as? String
+        #expect(style == "block")
+
+        var next = config
+        next.settings.tabSize = 2
+        next.theme = "monokai"
+        bridge.apply(next, replacing: config)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(try await bridge.evaluate("monaco.editor.getModels()[0].getOptions().tabSize") as? Int == 2)
+    }
+}
+
+@Test func languageDetection() {
+    #expect(MonacoCatalog.language(forFileName: "index.PHP") == "php")
+    #expect(MonacoCatalog.language(forFileName: "Dockerfile") == "dockerfile")
+    #expect(MonacoCatalog.language(forFileName: "Makefile") == "shell")
+    #expect(MonacoCatalog.language(forFileName: "notes") == "plaintext")
+    #expect(MonacoCatalog.language(forFileName: "page.tpl", associations: ["tpl": "twig"]) == "twig")
+    #expect(MonacoCatalog.languageName("javascript") == "JavaScript")
+    #expect(MonacoCatalog.resolveTheme("", dark: true) == "vs-dark")
+    #expect(MonacoCatalog.resolveTheme("nord", dark: false) == "nord")
 }

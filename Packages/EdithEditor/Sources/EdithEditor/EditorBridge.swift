@@ -24,7 +24,7 @@ public enum EditorEvent: Equatable, Sendable {
 }
 
 /// Settings passed to `EdithBridge.init`, mirroring the Linux app's dict.
-public struct EditorSettings: Encodable, Sendable {
+public struct EditorSettings: Encodable, Equatable, Sendable {
     public var insertSpaces = true
     public var tabSize = 4
     public var minimap = false
@@ -81,17 +81,10 @@ public final class EditorBridge {
         run("EdithBridge.\(function)(\(json.joined(separator: ", ")))")
     }
 
-    public func initEditor(
-        content: String,
-        language: String,
-        theme: String = "vs-dark",
-        fontFamily: String = "SF Mono, Menlo, monospace",
-        fontSize: Int = 13,
-        wordWrap: Bool = true,
-        settings: EditorSettings = .init(),
-        customOptions: [String: String] = [:]
-    ) {
-        call("init", content, language, theme, fontFamily, fontSize, wordWrap, settings, customOptions)
+    /// Calls `EdithBridge.<function>` with arguments that are already JSON,
+    /// for values with no Swift type, like the user's raw Monaco options.
+    public func callJSON(_ function: String, _ jsonArgs: [String]) {
+        run("EdithBridge.\(function)(\(jsonArgs.joined(separator: ", ")))")
     }
 
     /// Asks for the buffer; it arrives as `.saveContent`.

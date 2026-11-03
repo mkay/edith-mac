@@ -4,10 +4,11 @@ A native macOS SFTP/FTP client for live remote file editing, rebuilt in
 Swift and SwiftUI from [Edith for Linux](https://github.com/mkay/edith).
 The editor is Monaco, hosted in a `WKWebView`.
 
+**[Download the latest release](https://github.com/mkay/edith-mac/releases/latest)**
 
 ## Installing
 
-Download `Edith-<version>.dmg` from the [releases](https://github.com/mkay/edith-mac/releases)
+Download `Edith-<version>.dmg` from the [latest release](https://github.com/mkay/edith-mac/releases/latest)
 and drag Edith into Applications. It needs macOS 15 or later, on Apple Silicon or Intel.
 
 Edith isn't notarised by Apple, so the first launch needs one extra step:

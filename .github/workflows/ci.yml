@@ -12,6 +12,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Fetch Monaco
         run: scripts/fetch-monaco.sh
+      - name: Cache libssh2
+        id: libssh2
+        uses: actions/cache@v4
+        with:
+          path: Packages/EdithCore/Vendor/CLibssh2.xcframework
+          key: libssh2-${{ hashFiles('scripts/build-libssh2.sh') }}
+      - name: Build libssh2
+        if: steps.libssh2.outputs.cache-hit != 'true'
+        run: scripts/build-libssh2.sh
       - name: Test EdithCore
         run: swift test --package-path Packages/EdithCore
       - name: Test EdithEditor

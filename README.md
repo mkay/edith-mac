@@ -4,14 +4,14 @@ A native macOS SFTP/FTP client for live remote file editing, rebuilt in
 Swift and SwiftUI from [Edith for Linux](https://github.com/mkay/edith).
 The editor is Monaco, hosted in a `WKWebView`.
 
-> Phase 0: project skeleton and spikes. Not usable yet.
+> Phase 1: core services (config, Keychain, SFTP, transfers). No UI yet.
 
 ## Layout
 
 | Path | What |
 |---|---|
 | `App/` | The SwiftUI app target |
-| `Packages/EdithCore/` | Models, config, remote file systems, transfers. No UI imports. |
+| `Packages/EdithCore/` | Models, config, Keychain, known_hosts, SFTP client, transfer queue. No UI imports. |
 | `Packages/EdithEditor/` | Monaco host: `WKWebView`, `edith://` scheme handler, `bridge.js` |
 | `Spikes/SFTPSpike/` | libssh2 vs Citadel comparison ([results](Spikes/SFTPSpike/RESULTS.md)) |
 | `project.yml` | XcodeGen spec. `Edith.xcodeproj` is generated, not checked in. |
@@ -23,6 +23,7 @@ Requires Xcode 26 or later, plus [XcodeGen](https://github.com/yonaskolb/XcodeGe
 
 ```sh
 scripts/fetch-monaco.sh      # Monaco, Emmet, terser, csso from the npm registry
+scripts/build-libssh2.sh     # libssh2 + OpenSSL as a universal xcframework (~2 min)
 xcodegen generate
 open Edith.xcodeproj
 ```
@@ -33,6 +34,10 @@ Tests:
 (cd Packages/EdithCore && swift test)
 (cd Packages/EdithEditor && swift test)
 ```
+
+The SFTP tests start a throwaway OpenSSH server (`/usr/sbin/sshd`) on a free
+loopback port, running as you with key auth only, and stop it when the run
+ends. They read and write only inside a temp directory.
 
 ## Sharing with the Linux app
 

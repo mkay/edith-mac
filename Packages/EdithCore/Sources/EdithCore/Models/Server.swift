@@ -91,9 +91,22 @@ public struct Server: Codable, Hashable, Identifiable, Sendable {
         port = try c.decodeIfPresent(Int.self, forKey: .port) ?? defaults.port
         username = try c.decodeIfPresent(String.self, forKey: .username) ?? defaults.username
         keyFile = try c.decodeIfPresent(String.self, forKey: .keyFile) ?? defaults.keyFile
-        authMethod = try c.decodeIfPresent(AuthMethod.self, forKey: .authMethod) ?? defaults.authMethod
-        serverProtocol = try c.decodeIfPresent(ServerProtocol.self, forKey: .serverProtocol) ?? defaults.serverProtocol
-        ftpEncryption = try c.decodeIfPresent(FTPEncryption.self, forKey: .ftpEncryption) ?? defaults.ftpEncryption
+        // Enums decode leniently: one unrecognised value must not make the
+        // whole server list unreadable.
+        func raw(_ key: CodingKeys) throws -> String? { try c.decodeIfPresent(String.self, forKey: key) }
+        authMethod = try raw(.authMethod).flatMap(AuthMethod.init(rawValue:)) ?? defaults.authMethod
+        ftpEncryption = try raw(.ftpEncryption).flatMap(FTPEncryption.init(rawValue:)) ?? defaults.ftpEncryption
+        switch try raw(.serverProtocol) {
+        case "ftps":
+            // Legacy value from early Linux versions, migrated as the Linux
+            // app does at connect time.
+            serverProtocol = .ftp
+            if ftpEncryption == .none { ftpEncryption = .implicit }
+        case let value?:
+            serverProtocol = ServerProtocol(rawValue: value) ?? defaults.serverProtocol
+        case nil:
+            serverProtocol = defaults.serverProtocol
+        }
         initialDirectory = try c.decodeIfPresent(String.self, forKey: .initialDirectory) ?? defaults.initialDirectory
         folderID = try c.decodeIfPresent(String.self, forKey: .folderID) ?? defaults.folderID
     }

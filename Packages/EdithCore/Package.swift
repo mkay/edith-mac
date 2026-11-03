@@ -9,7 +9,12 @@ let package = Package(
         .library(name: "EdithCore", targets: ["EdithCore"]),
     ],
     targets: [
-        .target(name: "EdithCore"),
+        // Built by scripts/build-libssh2.sh: libssh2 on a static OpenSSL.
+        .binaryTarget(name: "CLibssh2", path: "Vendor/CLibssh2.xcframework"),
+        .target(
+            name: "EdithCore",
+            dependencies: ["CLibssh2"]
+        ),
         .testTarget(
             name: "EdithCoreTests",
             dependencies: ["EdithCore"],

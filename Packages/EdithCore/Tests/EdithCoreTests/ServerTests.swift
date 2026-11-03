@@ -47,3 +47,17 @@ private func loadFixture() throws -> LinuxConfig {
         "protocol", "ftp_encryption", "initial_directory", "folder_id",
     ])
 }
+
+@Test func legacyFTPSAndUnknownValuesDecode() throws {
+    let json = #"""
+    [{"protocol": "ftps", "auth_method": "kerberos"},
+     {"protocol": "ftps", "ftp_encryption": "explicit_required"},
+     {"protocol": "gopher"}]
+    """#
+    let servers = try JSONDecoder().decode([Server].self, from: Data(json.utf8))
+    #expect(servers[0].serverProtocol == .ftp)
+    #expect(servers[0].ftpEncryption == .implicit)
+    #expect(servers[0].authMethod == .password)
+    #expect(servers[1].ftpEncryption == .explicitRequired)
+    #expect(servers[2].serverProtocol == .sftp)
+}

@@ -4,7 +4,23 @@ A native macOS SFTP/FTP client for live remote file editing, rebuilt in
 Swift and SwiftUI from [Edith for Linux](https://github.com/mkay/edith).
 The editor is Monaco, hosted in a `WKWebView`.
 
-> Phase 1: core services (config, Keychain, SFTP, transfers). No UI yet.
+
+## Installing
+
+Download `Edith-<version>.dmg` from the [releases](https://github.com/mkay/edith-mac/releases)
+and drag Edith into Applications. It needs macOS 15 or later, on Apple Silicon or Intel.
+
+Edith isn't notarised by Apple, so the first launch needs one extra step:
+
+1. Open Edith. macOS says it can't verify it and doesn't open it.
+2. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Edith.
+
+After that it opens normally. Updates arrive through **Edith → Check for Updates…**
+(and automatically, if you allow it), signed with Edith's own update key, and don't
+need this step again.
+
+Coming from the Linux app? Use **Export Servers…** there (with passwords, if you
+like), then **File → Import Servers…** here. A FileZilla `sitemanager.xml` works too.
 
 ## Layout
 
@@ -54,6 +70,21 @@ follow the Linux app's `po/de.po`.
 - `bridge.js` comes from the Linux repo. The one change here (a relative
   `vs` path in `require.config`, needed for the `edith://` scheme) also works
   under `file://` and can go upstream.
+
+## Releasing
+
+```sh
+# Update App/Resources/whatsnew.md, commit, then:
+scripts/release.sh 0.2.0            # → dist/0.2.0/Edith-0.2.0.dmg and appcast.xml
+scripts/release.sh 0.2.0 --publish  # also creates the GitHub release (needs gh)
+```
+
+Releases are signed with an Apple Development certificate, which keeps the app's
+identity stable so Keychain passwords survive updates; they aren't notarised. The
+build number is the commit count. The update feed is the newest GitHub release's
+`appcast.xml`, signed with Sparkle's EdDSA key from the login Keychain of whoever
+releases (`build/tools/sparkle/bin/generate_keys -x file` exports it for backup).
+Without `--publish`, create the release `v0.2.0` on GitHub and attach both files.
 
 ## License
 

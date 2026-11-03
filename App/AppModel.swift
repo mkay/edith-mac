@@ -13,6 +13,7 @@ final class AppModel {
     let config: ConfigStore
     let keychain: Keychain
     let hostKeys: HostKeyStore
+    let certificates: CertificateStore
 
     private(set) var servers: [Server] = []
     private(set) var folders: [Folder] = []
@@ -32,10 +33,12 @@ final class AppModel {
             let url = URL(fileURLWithPath: (dir as NSString).expandingTildeInPath, isDirectory: true)
             config = ConfigStore(fileURL: url.appending(path: "servers.json"))
             hostKeys = HostKeyStore(appFile: url.appending(path: "known_hosts"))
+            certificates = CertificateStore(fileURL: url.appending(path: "trusted_certificates.json"))
             keychain = Keychain(service: Keychain.defaultService + ".dev")
         } else {
             config = ConfigStore()
             hostKeys = HostKeyStore()
+            certificates = CertificateStore()
             keychain = Keychain()
         }
         config.backupNow()

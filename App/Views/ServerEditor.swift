@@ -87,7 +87,7 @@ struct ServerEditor: View {
 
             HStack {
                 Button("Test Connection", action: test)
-                    .disabled(!isValid || testState == .running || server.serverProtocol == .ftp)
+                    .disabled(!isValid || testState == .running)
                 testResult
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
@@ -110,7 +110,7 @@ struct ServerEditor: View {
 
     @ViewBuilder private var authFooter: some View {
         if server.serverProtocol == .ftp {
-            Text("FTP uses passive mode (PASV). FTP connections arrive in a later version of the Mac app.")
+            Text("FTP uses passive mode. Without encryption, the password and files travel unprotected.")
         } else if server.secretKind != .none {
             Text("Saved in your Keychain. Leave empty to be asked when connecting.")
         } else if server.keyFile.isEmpty {
@@ -173,9 +173,12 @@ struct ServerEditor: View {
         testState = .running
         Task {
             do {
-                let session = try await Session.connect(to: candidate, secret: typed ?? app.secret(for: candidate), hostKeys: app.hostKeys) { challenge in
-                    await Self.confirmHostKey(challenge)
-                }
+                let session = try await Session.connect(
+                    to: candidate, secret: typed ?? app.secret(for: candidate),
+                    hostKeys: app.hostKeys, certificates: app.certificates,
+                    approveHostKey: { await Self.confirmHostKey($0) },
+                    approveCertificate: { await Self.confirmCertificate($0) }
+                )
                 await session.close()
                 testState = .succeeded
             } catch {
@@ -185,6 +188,15 @@ struct ServerEditor: View {
     }
 
     /// A sheet can't present another sheet, so testing asks with a plain alert.
+    private static func confirmCertificate(_ challenge: CertificateChallenge) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Trust the certificate of \(challenge.host)?"
+        alert.informativeText = CertificatePrompt.explanation(challenge) + "\n\n\(challenge.subject)\n\(challenge.fingerprint)"
+        alert.addButton(withTitle: "Trust")
+        alert.addButton(withTitle: "Cancel")
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
     private static func confirmHostKey(_ challenge: HostKeyChallenge) -> Bool {
         let alert = NSAlert()
         alert.messageText = "Trust \(challenge.host)?"
@@ -284,6 +296,55 @@ struct PassphrasePrompt: View {
         guard !answered else { return }
         answered = true
         request.answer(value)
+        dismiss()
+    }
+}
+
+/// An FTPS certificate macOS doesn't trust: show why and ask.
+struct CertificatePrompt: View {
+    let request: CertificateRequest
+    @Environment(\.dismiss) private var dismiss
+    @State private var answered = false
+
+    static func explanation(_ c: CertificateChallenge) -> String {
+        "macOS doesn't trust this server's certificate: \(c.reason) Hosting providers often use one certificate for all their customers, so a name mismatch can be harmless. If in doubt, compare the fingerprint with one from your provider."
+    }
+
+    var body: some View {
+        let c = request.challenge
+        VStack(alignment: .leading, spacing: 14) {
+            Label("Untrusted Certificate", systemImage: "lock.trianglebadge.exclamationmark")
+                .font(.headline)
+            Text(verbatim: "\(c.host):\(c.port)").font(.title3.monospaced())
+            Text(Self.explanation(c))
+                .fixedSize(horizontal: false, vertical: true)
+            GroupBox {
+                Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 4) {
+                    GridRow { Text("Issued to").foregroundStyle(.secondary); Text(c.subject) }
+                    GridRow { Text("Issued by").foregroundStyle(.secondary); Text(c.issuer) }
+                    GridRow {
+                        Text("SHA-256").foregroundStyle(.secondary)
+                        Text(c.fingerprint).font(.caption.monospaced()).textSelection(.enabled)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack {
+                Spacer()
+                Button("Cancel", role: .cancel) { finish(false) }
+                    .keyboardShortcut(.cancelAction)
+                Button("Trust and Connect") { finish(true) }
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 500)
+        .onDisappear { if !answered { request.answer(false) } }
+    }
+
+    private func finish(_ trust: Bool) {
+        answered = true
+        request.answer(trust)
         dismiss()
     }
 }

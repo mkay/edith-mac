@@ -69,6 +69,12 @@ struct PassphraseRequest: Identifiable {
     let answer: (String?) -> Void
 }
 
+struct CertificateRequest: Identifiable {
+    let id = UUID()
+    let challenge: CertificateChallenge
+    let answer: (Bool) -> Void
+}
+
 struct HostKeyRequest: Identifiable {
     let id = UUID()
     let challenge: HostKeyChallenge
@@ -160,6 +166,7 @@ final class WindowModel {
     var secretRequest: SecretRequest?
     var passphraseRequest: PassphraseRequest?
     var hostKeyRequest: HostKeyRequest?
+    var certificateRequest: CertificateRequest?
     var nameRequest: NameRequest?
     var infoFile: RemoteFile?
     var folderChoice: FolderChoice?
@@ -246,8 +253,9 @@ final class WindowModel {
         while true {
             do {
                 let session = try await Session.connect(
-                    to: server, secret: secret, hostKeys: app.hostKeys,
-                    approveHostKey: { [weak self] challenge in await self?.askHostKey(challenge) ?? false }
+                    to: server, secret: secret, hostKeys: app.hostKeys, certificates: app.certificates,
+                    approveHostKey: { [weak self] challenge in await self?.askHostKey(challenge) ?? false },
+                    approveCertificate: { [weak self] challenge in await self?.askCertificate(challenge) ?? false }
                 )
                 if remember, let secret { try? app.keychain.setSecret(secret, for: server.id) }
                 let connection = Connection(session: session, app: app, window: self)
@@ -274,6 +282,12 @@ final class WindowModel {
             secretRequest = SecretRequest(server: server, kind: server.secretKind, error: error) { secret, remember in
                 continuation.resume(returning: secret.map { ($0, remember) })
             }
+        }
+    }
+
+    private func askCertificate(_ challenge: CertificateChallenge) async -> Bool {
+        await withCheckedContinuation { continuation in
+            certificateRequest = CertificateRequest(challenge: challenge) { continuation.resume(returning: $0) }
         }
     }
 

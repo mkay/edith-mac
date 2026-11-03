@@ -34,11 +34,21 @@ struct SessionTests {
         #expect(Server(serverProtocol: .ftp).secretKind == .password)
     }
 
-    @Test func ftpIsNotSupportedYet() async throws {
-        await #expect(throws: RemoteError.self) {
-            _ = try await Session.connect(to: Server(host: "x", serverProtocol: .ftp), secret: nil,
-                                          hostKeys: server.hostKeyStore(), approveHostKey: { _ in false })
-        }
+    @Test(.enabled(if: LocalFTPServer.available)) func ftpSessions() async throws {
+        let ftp = try LocalFTPServer(tls: .explicit)
+        try ftp.write("x", to: "/site/index.html")
+        let site = Server(host: "127.0.0.1", port: ftp.port, username: "test", serverProtocol: .ftp,
+                          ftpEncryption: .explicitRequired, initialDirectory: "/site")
+        let certs = CertificateStore(fileURL: FileManager.default.temporaryDirectory.appending(path: "c-\(UUID().uuidString).json"))
+        let session = try await Session.connect(to: site, secret: "secret", hostKeys: server.hostKeyStore(), certificates: certs,
+                                                approveHostKey: { _ in false }, approveCertificate: { _ in true })
+        #expect(session.startDirectory == "/site")
+        #expect(!session.canExec)
+        // The transfer connection reuses the accepted certificate without asking.
+        let transfer = await session.transferConnection()
+        #expect(transfer !== session.client)
+        #expect(try await transfer.list("/site").map(\.name) == ["index.html"])
+        await session.close()
     }
 
     @Test func transfersUseASecondConnection() async throws {

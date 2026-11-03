@@ -40,10 +40,12 @@ public final class Session {
         to server: Server,
         secret: String?,
         hostKeys: HostKeyStore,
-        approveHostKey: @escaping HostKeyApprover
+        certificates: CertificateStore = CertificateStore(),
+        approveHostKey: @escaping HostKeyApprover,
+        approveCertificate: @escaping CertificateApprover = { _ in false }
     ) async throws -> Session {
-        guard server.serverProtocol == .sftp else {
-            throw RemoteError.unsupported("FTP isn't supported yet. It's coming in a later version.")
+        if server.serverProtocol == .ftp {
+            return try await connectFTP(server, password: secret, certificates: certificates, approve: approveCertificate)
         }
         let credentials = server.credentials(secret: secret)
         let makeClient: @Sendable () async throws -> any RemoteFileSystem = {
@@ -62,9 +64,33 @@ public final class Session {
                        canExec: await client.canExec, makeClient: makeClient)
     }
 
+    private static func connectFTP(_ server: Server, password: String?, certificates: CertificateStore,
+                                   approve: @escaping CertificateApprover) async throws -> Session {
+        let security: FTPClient.Security = switch server.ftpEncryption {
+        case .none: .none
+        case .explicitOptional: .explicitOptional
+        case .explicitRequired: .explicitRequired
+        case .implicit: .implicit
+        }
+        let makeClient: @Sendable () async throws -> any RemoteFileSystem = {
+            let client = FTPClient(certificates: certificates)
+            // The first connection settled the certificate; a new question
+            // now would mean it changed in between, so refuse instead.
+            try await client.connect(host: server.host, port: server.port, username: server.username,
+                                     password: password, security: security, approveCertificate: { _ in false })
+            return client
+        }
+        let client = FTPClient(certificates: certificates)
+        try await client.connect(host: server.host, port: server.port, username: server.username,
+                                 password: password, security: security, approveCertificate: approve)
+        let home = (try? await client.normalize(".")) ?? "/"
+        let start = await resolveStart(server.initialDirectory, home: home, client: client)
+        return Session(server: server, client: client, home: home, startDirectory: start, canExec: false, makeClient: makeClient)
+    }
+
     /// `~` and `~/…` expand to the home directory; a start directory that
     /// doesn't exist (any more) falls back to home rather than failing.
-    private static func resolveStart(_ initial: String, home: String, client: SFTPClient) async -> String {
+    private static func resolveStart(_ initial: String, home: String, client: any RemoteFileSystem) async -> String {
         var path = initial.trimmingCharacters(in: .whitespaces)
         if path.isEmpty { path = "/" }
         if path == "~" { path = home } else if path.hasPrefix("~/") { path = remoteJoin(home, String(path.dropFirst(2))) }

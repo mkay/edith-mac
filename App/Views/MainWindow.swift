@@ -39,6 +39,7 @@ private struct WindowContent: View {
         .sheet(item: $window.serverEditor) { ServerEditor(request: $0) }
         .sheet(item: $window.secretRequest) { SecretPrompt(request: $0) }
         .sheet(item: $window.hostKeyRequest) { HostKeyPrompt(request: $0) }
+        .sheet(item: $window.certificateRequest) { CertificatePrompt(request: $0) }
         .sheet(item: $window.passphraseRequest) { PassphrasePrompt(request: $0) }
         .sheet(item: $window.nameRequest) { NamePrompt(request: $0) }
         .sheet(item: $window.infoFile) { FileInfoSheet(file: $0) }

@@ -669,7 +669,9 @@ final class TLSContext: @unchecked Sendable {
 /// A socket, plain or wrapped in TLS, with line reading for the control
 /// connection.
 final class FTPStream: @unchecked Sendable {
-    let fd: Int32
+    /// -1 once closed. Closing twice would close whatever socket the system
+    /// handed that number to in between, another connection's perhaps.
+    private(set) var fd: Int32
     private var ssl: OpaquePointer?
     private var pending = [UInt8]()
 
@@ -786,7 +788,10 @@ final class FTPStream: @unchecked Sendable {
             SSL_free(ssl)
             self.ssl = nil
         }
-        if fd >= 0 { Darwin.close(fd) }
+        if fd >= 0 {
+            Darwin.close(fd)
+            fd = -1
+        }
     }
 
     private static func lastError() -> String {

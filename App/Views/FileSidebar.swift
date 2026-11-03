@@ -9,6 +9,7 @@ import SwiftUI
 /// file list, pinned files and the connection status.
 struct FileSidebar: View {
     let connection: Connection
+    @Environment(AppModel.self) private var app
     @Environment(WindowModel.self) private var window
 
     var body: some View {
@@ -47,7 +48,8 @@ struct FileSidebar: View {
                 path: browser.path,
                 showDetails: window.showFileDetails,
                 sortKey: browser.sortKey,
-                ascending: browser.ascending
+                ascending: browser.ascending,
+                singleClickOpens: app.editorPreferences.singleClickOpen
             )
             .overlay { overlay(browser) }
 
@@ -280,20 +282,5 @@ private struct TransferRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-    }
-}
-
-// MARK: - Main area
-
-/// Where the editor goes in Phase 3.
-struct ConnectedDetail: View {
-    let connection: Connection
-
-    var body: some View {
-        ContentUnavailableView {
-            Label("Connected to \(connection.server.host)", systemImage: "checkmark.circle")
-        } description: {
-            Text("Browse files in the sidebar. Editing arrives in the next version of the Mac app.")
-        }
     }
 }

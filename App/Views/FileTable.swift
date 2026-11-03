@@ -21,6 +21,7 @@ struct FileTable: NSViewRepresentable {
     let showDetails: Bool
     let sortKey: Browser.SortKey
     let ascending: Bool
+    let singleClickOpens: Bool
     @Environment(WindowModel.self) private var window
 
     func makeCoordinator() -> Coordinator {
@@ -52,6 +53,7 @@ struct FileTable: NSViewRepresentable {
         table.delegate = coordinator
         table.target = coordinator
         table.doubleAction = #selector(Coordinator.doubleClicked(_:))
+        table.action = #selector(Coordinator.clicked(_:))
         table.menu = NSMenu()
         table.menu?.delegate = coordinator
         table.registerForDraggedTypes([.fileURL, .remotePath])
@@ -72,6 +74,7 @@ struct FileTable: NSViewRepresentable {
         let coordinator = context.coordinator
         coordinator.connection = connection
         coordinator.window = window
+        coordinator.singleClickOpens = singleClickOpens
         guard let table = coordinator.table else { return }
 
         for column in Column.allCases where column != .name {
@@ -141,6 +144,7 @@ struct FileTable: NSViewRepresentable {
         var connection: Connection?
         var window: WindowModel?
         var applyingSort = false
+        var singleClickOpens = false
         private var rows: [Row] = []
         private var shownPath = ""
 
@@ -222,6 +226,14 @@ struct FileTable: NSViewRepresentable {
         // MARK: Opening
 
         @objc func doubleClicked(_ sender: NSTableView) {
+            guard !singleClickOpens else { return }
+            activate(row: sender.clickedRow)
+        }
+
+        /// With the single-click preference, a plain click opens; a click with
+        /// ⌘ or ⇧ still just selects.
+        @objc func clicked(_ sender: NSTableView) {
+            guard singleClickOpens, NSEvent.modifierFlags.intersection([.command, .shift]).isEmpty else { return }
             activate(row: sender.clickedRow)
         }
 

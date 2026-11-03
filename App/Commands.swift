@@ -13,6 +13,8 @@ struct EdithCommands: Commands {
     @FocusedValue(\.windowModel) private var window
     @Environment(\.openWindow) private var openWindow
 
+    private var editor: EditorController? { window?.connection?.editor }
+
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Window") { openWindow(id: "main") }
@@ -26,6 +28,41 @@ struct EdithCommands: Commands {
             Divider()
             Button("Import Servers…") { window?.importServers() }
                 .disabled(window == nil)
+        }
+
+        CommandGroup(replacing: .saveItem) {
+            Button("Save") { Task { await editor?.saveSelected() } }
+                .keyboardShortcut("s")
+                .disabled(editor?.selected == nil)
+            Divider()
+            Button("Close Tab") { Task { await editor?.closeSelected() } }
+                .keyboardShortcut("w")
+                .disabled(editor?.selected == nil)
+            Button("Close Window") { NSApp.keyWindow?.performClose(nil) }
+                .keyboardShortcut("w", modifiers: [.command, .shift])
+            Button("Reopen Closed Tab") { Task { await editor?.reopenClosed() } }
+                .keyboardShortcut("t", modifiers: [.command, .shift])
+                .disabled(editor?.workspace.canReopenClosed != true)
+        }
+
+        CommandMenu("Editor") {
+            let bridge = editor?.selected?.bridge
+            Button("Find…") { bridge?.showFind() }
+                .keyboardShortcut("f")
+                .disabled(bridge == nil)
+            Button("Find and Replace…") { bridge?.showReplace() }
+                .keyboardShortcut("f", modifiers: [.command, .option])
+                .disabled(bridge == nil)
+            Button("Go to Line…") { bridge?.gotoLine() }
+                .keyboardShortcut("l")
+                .disabled(bridge == nil)
+            Divider()
+            Button("Toggle Comment") { bridge?.toggleLineComment() }
+                .keyboardShortcut("/")
+                .disabled(bridge == nil)
+            Button("Toggle Word Wrap") { bridge?.toggleWrap() }
+                .keyboardShortcut("z", modifiers: .option)
+                .disabled(bridge == nil)
         }
 
         CommandMenu("Server") {

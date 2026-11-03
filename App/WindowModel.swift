@@ -5,6 +5,7 @@ import AppKit
 import EdithCore
 import Foundation
 import Observation
+import SwiftUI
 
 /// What the server list shows, picked in the sidebar.
 enum ServerGroupSelection: Hashable {
@@ -20,15 +21,23 @@ final class Connection {
     let session: Session
     let browser: Browser
     let transfers: TransferLog
+    let editor: EditorController
     private(set) var pins: [Pin] = []
+    private(set) var recents: [String] = []
     private let app: AppModel
 
-    init(session: Session, app: AppModel) {
+    init(session: Session, app: AppModel, window: WindowModel) {
         self.session = session
         self.browser = Browser(session: session)
         self.transfers = TransferLog(queue: session.transfers)
+        self.editor = EditorController(workspace: Workspace(session: session), app: app, window: window)
         self.app = app
         reloadPins()
+        reloadRecents()
+    }
+
+    func reloadRecents() {
+        recents = app.config.recents(serverID: server.id)
     }
 
     var server: Server { session.server }
@@ -93,6 +102,25 @@ struct FolderChoice: Identifiable {
     let choose: (String) async -> Void
 }
 
+/// A question with several answers. Cancel is always offered and answers nil.
+struct ChoiceRequest: Identifiable {
+    struct Option {
+        let title: String
+        var role: ButtonRole?
+
+        init(_ title: String, role: ButtonRole? = nil) {
+            self.title = title
+            self.role = role
+        }
+    }
+
+    let id = UUID()
+    let title: String
+    let message: String
+    let options: [Option]
+    let answer: (Int?) -> Void
+}
+
 struct Message: Identifiable {
     let id = UUID()
     let title: String
@@ -136,15 +164,55 @@ final class WindowModel {
     var infoFile: RemoteFile?
     var folderChoice: FolderChoice?
     var confirmation: Confirmation?
+    var choice: ChoiceRequest?
     var message: Message?
     var showTransfers = false
 
-    /// The AppKit window, for what SwiftUI can't do: resizing the sidebar.
-    @ObservationIgnored weak var hostWindow: NSWindow?
+    /// The AppKit window, for what SwiftUI can't do: resizing the sidebar,
+    /// and asking before a window with unsaved changes closes.
+    @ObservationIgnored private(set) weak var hostWindow: NSWindow?
+    @ObservationIgnored private var closeGuard: WindowCloseGuard?
+
+    func attach(_ window: NSWindow) {
+        hostWindow = window
+        if closeGuard == nil {
+            closeGuard = WindowCloseGuard(window: window) { [weak self] in self?.windowShouldClose() ?? true }
+        }
+    }
+
+    /// Lets the window close, unless tabs have unsaved changes: then asks,
+    /// and closes it afterwards if the answer is to discard them.
+    private func windowShouldClose() -> Bool {
+        guard hasUnsavedChanges else { return true }
+        Task {
+            let answer = await choose(
+                title: "Close Window with Unsaved Changes?",
+                message: "Your unsaved changes will be lost.",
+                buttons: [.init("Discard and Close", role: .destructive)]
+            )
+            if answer == 0 {
+                forceDisconnect()
+                hostWindow?.close()
+            }
+        }
+        return false
+    }
     @ObservationIgnored private var sidebarWidthBeforeDetails: CGFloat?
 
     init(app: AppModel) {
         self.app = app
+        app.register(self)
+    }
+
+    var hasUnsavedChanges: Bool { connection?.editor.hasUnsavedChanges ?? false }
+
+    /// Asks a question with several answers; nil means Cancel.
+    func choose(title: String, message: String, buttons: [ChoiceRequest.Option]) async -> Int? {
+        // One question at a time: wait for any open one to be answered.
+        while choice != nil { try? await Task.sleep(for: .milliseconds(100)) }
+        return await withCheckedContinuation { continuation in
+            choice = ChoiceRequest(title: title, message: message, options: buttons) { continuation.resume(returning: $0) }
+        }
     }
 
     var connection: Connection? {
@@ -182,7 +250,7 @@ final class WindowModel {
                     approveHostKey: { [weak self] challenge in await self?.askHostKey(challenge) ?? false }
                 )
                 if remember, let secret { try? app.keychain.setSecret(secret, for: server.id) }
-                let connection = Connection(session: session, app: app)
+                let connection = Connection(session: session, app: app, window: self)
                 phase = .connected(connection)
                 await connection.browser.open(session.startDirectory)
                 return
@@ -215,8 +283,24 @@ final class WindowModel {
         }
     }
 
+    /// Disconnects, asking first if any tab has unsaved changes.
     func disconnect() {
         guard let connection else { return }
+        guard connection.editor.hasUnsavedChanges else { return forceDisconnect() }
+        Task {
+            let answer = await choose(
+                title: "Disconnect with Unsaved Changes?",
+                message: "Unsaved changes in: " + connection.editor.orderedTabs.filter { $0.document.isModified || $0.document.isDeleted }.map(\.document.name).joined(separator: ", "),
+                buttons: [.init("Discard and Disconnect", role: .destructive)]
+            )
+            if answer == 0 { forceDisconnect() }
+        }
+    }
+
+    func forceDisconnect() {
+        guard let connection else { return }
+        connection.editor.shutdown()
+        hostWindow?.isDocumentEdited = false
         phase = .disconnected
         showFileDetails = false
         showTransfers = false
@@ -372,14 +456,38 @@ final class WindowModel {
 
     // MARK: Files
 
-    /// Opens a folder, or (from Phase 3) a file in the editor.
+    /// Opens a folder in the browser, or a file in the editor. A binary file
+    /// can't be edited, so it's offered as a download instead.
     func open(_ file: RemoteFile) {
         guard let connection else { return }
         if file.isDirectory {
             Task { await connection.browser.open(file.path) }
-        } else {
-            message = Message(title: "Not Yet", text: "Opening files in the editor comes in the next version of the Mac app.")
+            return
         }
+        Task {
+            do {
+                try await connection.editor.open(file.path)
+                connection.reloadRecents()
+            } catch WorkspaceError.binary(let name) {
+                confirmation = Confirmation(
+                    title: "Can't Edit “\(name)”",
+                    message: "It looks like a binary file, which the editor can't show. Download it instead?",
+                    action: "Download…", destructive: false
+                ) { [self] in download([file]) }
+            } catch is CancellationError {
+            } catch {
+                message = Message(title: "Couldn't Open “\(file.name)”", text: error.localizedDescription)
+            }
+        }
+    }
+
+    func openFile(at path: String) {
+        open(RemoteFile(name: remoteName(path), path: path))
+    }
+
+    /// Shows a file's folder in the browser, with the file selected.
+    func reveal(_ path: String) {
+        navigate(to: remoteParent(path))
     }
 
     func navigate(to path: String) {
@@ -481,7 +589,7 @@ final class WindowModel {
         if pin.isDirectory {
             navigate(to: pin.path)
         } else {
-            open(RemoteFile(name: remoteName(pin.path), path: pin.path))
+            openFile(at: pin.path)
         }
     }
 

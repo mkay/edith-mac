@@ -4,6 +4,9 @@
 import Foundation
 
 extension MonacoCatalog {
+    /// Not in Monaco's list, which only has real languages.
+    public static let plainText = Entry(id: "plaintext", name: "Plain Text")
+
     /// The language for a file name: a user association for its extension
     /// first, then the built-in table, then a few well-known bare names.
     public static func language(forFileName fileName: String, associations: [String: String] = [:]) -> String {
@@ -20,7 +23,7 @@ extension MonacoCatalog {
     }
 
     public static func languageName(_ id: String) -> String {
-        languages.first { $0.id == id }?.name ?? (id == "plaintext" ? "Plain Text" : id)
+        (languages + [plainText]).first { $0.id == id }?.name ?? id
     }
 
     /// A stored scheme, or the light or dark default when following the system.

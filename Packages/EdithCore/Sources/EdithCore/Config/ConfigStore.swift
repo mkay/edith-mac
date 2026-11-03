@@ -283,6 +283,25 @@ public final class ConfigStore: Sendable {
         }
     }
 
+    /// A preference as JSON text, for values with no fixed shape, like
+    /// the Monaco overrides object.
+    public func preferenceJSON(_ key: String) -> String? {
+        guard let value = (loadRaw()["preferences"] as? [String: Any])?[key],
+              let data = try? JSONSerialization.data(withJSONObject: value, options: [.fragmentsAllowed, .sortedKeys, .prettyPrinted])
+        else { return nil }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    /// Stores JSON text as a preference value. Throws if it isn't valid JSON.
+    public func setPreferenceJSON(_ key: String, _ json: String) throws {
+        let value = try JSONSerialization.jsonObject(with: Data(json.utf8), options: .fragmentsAllowed)
+        try mutate { data in
+            var prefs = data["preferences"] as? [String: Any] ?? [:]
+            prefs[key] = value
+            data["preferences"] = prefs
+        }
+    }
+
     // MARK: Backups
 
     /// Copies the file into backups/ beside it, keeping the last ten.

@@ -49,14 +49,23 @@ private struct WindowContent: View {
         } message: { c in
             Text(c.message)
         }
+        .alert(window.choice?.title ?? "", isPresented: isPresented($window.choice), presenting: window.choice) { c in
+            ForEach(Array(c.options.enumerated()), id: \.offset) { index, option in
+                Button(option.title, role: option.role) { c.answer(index) }
+            }
+            Button("Cancel", role: .cancel) { c.answer(nil) }
+        } message: { c in
+            Text(c.message)
+        }
         .alert(window.message?.title ?? "", isPresented: isPresented($window.message), presenting: window.message) { _ in
             Button("OK") {}
         } message: { m in
             Text(m.text)
         }
         .environment(window)
-        .onDisappear { window.disconnect() }
-        .background(WindowAccessor { window.hostWindow = $0 })
+        .onDisappear { window.forceDisconnect() }
+        .background(WindowAccessor { window.attach($0) })
+        .onChange(of: window.hasUnsavedChanges) { _, unsaved in window.hostWindow?.isDocumentEdited = unsaved }
         .onChange(of: window.showFileDetails) { _, show in window.fitSidebar(toDetails: show) }
         .debugHooks(window)
     }
@@ -87,7 +96,7 @@ private struct WindowContent: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .connected(let connection):
-            ConnectedDetail(connection: connection)
+            EditorArea(connection: connection)
         }
     }
 

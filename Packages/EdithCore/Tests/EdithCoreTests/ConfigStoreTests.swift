@@ -135,3 +135,13 @@ private func fixture() throws -> String {
     let backups = store.fileURL.deletingLastPathComponent().appending(path: "backups")
     #expect(!FileManager.default.fileExists(atPath: backups.path))
 }
+
+@Test func rawJSONPreferences() throws {
+    let store = try makeStore()
+    #expect(store.preferenceJSON("editor_overrides") == nil)
+    try store.setPreferenceJSON("editor_overrides", #"{"cursorStyle": "block", "html": {"format": {"wrapLineLength": 0}}}"#)
+    let back = try #require(store.preferenceJSON("editor_overrides"))
+    let parsed = try #require(JSONSerialization.jsonObject(with: Data(back.utf8)) as? [String: Any])
+    #expect(parsed["cursorStyle"] as? String == "block")
+    #expect(throws: (any Error).self) { try store.setPreferenceJSON("x", "{oops") }
+}

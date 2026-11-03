@@ -17,6 +17,12 @@ final class AppModel {
     private(set) var servers: [Server] = []
     private(set) var folders: [Folder] = []
     private(set) var pinnedServerIDs: [String] = []
+    private(set) var editorPreferences = EditorPreferences()
+    @ObservationIgnored private var windows: [WeakWindow] = []
+
+    private struct WeakWindow {
+        weak var model: WindowModel?
+    }
 
     /// `EDITH_CONFIG_DIR` points the app at another settings folder, with its
     /// own known_hosts and Keychain service, for trying things out without
@@ -34,6 +40,29 @@ final class AppModel {
         }
         config.backupNow()
         reload()
+        editorPreferences = EditorPreferences.load(from: config)
+    }
+
+    func setEditorPreferences(_ new: EditorPreferences) throws {
+        let old = editorPreferences
+        editorPreferences = new
+        try new.save(to: config, replacing: old)
+    }
+
+    // MARK: Windows
+
+    func register(_ window: WindowModel) {
+        windows.removeAll { $0.model == nil }
+        windows.append(WeakWindow(model: window))
+    }
+
+    /// Unsaved tabs in any window, by server, for the quit warning.
+    var unsavedSummary: [String] {
+        windows.compactMap(\.model).compactMap { window in
+            guard let c = window.connection, c.editor.hasUnsavedChanges else { return nil }
+            let names = c.editor.orderedTabs.filter { $0.document.isModified || $0.document.isDeleted }.map(\.document.name)
+            return "\(c.server.displayName): \(names.joined(separator: ", "))"
+        }
     }
 
     func reload() {

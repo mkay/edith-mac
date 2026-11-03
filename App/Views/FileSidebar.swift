@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kreuder <mk@singular.de>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AppKit
 import EdithCore
 import SwiftUI
 
@@ -35,7 +36,7 @@ struct FileSidebar: View {
             VStack(spacing: 6) {
                 TextField("Filter files", text: $browser.filter, prompt: Text("Filter files…"))
                     .textFieldStyle(.roundedBorder)
-                AncestorMenu(browser: browser)
+                AncestorMenu(browser: browser, path: browser.path)
             }
             .padding(.horizontal, 10)
             .padding(.bottom, 6)
@@ -83,20 +84,51 @@ struct FileSidebar: View {
 }
 
 /// The current folder's name; opens to jump to any folder above it.
-struct AncestorMenu: View {
+///
+/// An NSPopUpButton, because SwiftUI's menu picker sizes itself to its
+/// contents and won't fill the sidebar's width.
+struct AncestorMenu: NSViewRepresentable {
     let browser: Browser
+    /// Passed in, not read from `browser`, so SwiftUI updates on navigation.
+    let path: String
 
-    var body: some View {
-        // A picker rather than a Menu: it stretches to the sidebar's width.
-        Picker("Folder", selection: Binding(get: { browser.path }, set: { path in Task { await browser.open(path) } })) {
-            ForEach(remoteAncestors(browser.path), id: \.self) { path in
-                Label(remoteName(path), systemImage: path == "/" ? "externaldrive" : "folder").tag(path)
-            }
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSPopUpButton {
+        let button = NSPopUpButton(frame: .zero, pullsDown: false)
+        button.target = context.coordinator
+        button.action = #selector(Coordinator.chosen(_:))
+        button.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return button
+    }
+
+    func updateNSView(_ button: NSPopUpButton, context: Context) {
+        context.coordinator.browser = browser
+        guard button.toolTip != path else { return }
+        button.removeAllItems()
+        for ancestor in remoteAncestors(path) {
+            let item = NSMenuItem(title: remoteName(ancestor), action: nil, keyEquivalent: "")
+            item.image = NSImage(systemSymbolName: ancestor == "/" ? "externaldrive" : "folder", accessibilityDescription: nil)
+            item.representedObject = ancestor
+            button.menu?.addItem(item)
         }
-        .labelsHidden()
-        .pickerStyle(.menu)
-        .frame(maxWidth: .infinity)
-        .help(browser.path)
+        button.selectItem(at: 0)
+        button.toolTip = path
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSPopUpButton, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? nsView.intrinsicContentSize.width, height: nsView.intrinsicContentSize.height)
+    }
+
+    @MainActor
+    final class Coordinator: NSObject {
+        var browser: Browser?
+
+        @objc func chosen(_ sender: NSPopUpButton) {
+            guard let path = sender.selectedItem?.representedObject as? String, let browser, path != browser.path else { return }
+            Task { await browser.open(path) }
+        }
     }
 }
 

@@ -3,11 +3,20 @@
 
 import AppKit
 import EdithCore
+import Sparkle
 
 /// Asks before quitting with unsaved changes, and clears temp files after.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var app: AppModel?
+
+    /// Sparkle's updater. Off in debug builds, which shouldn't replace
+    /// themselves with a release.
+    #if DEBUG
+    let updater = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
+    #else
+    let updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    #endif
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let unsaved = app?.unsavedSummary, !unsaved.isEmpty else { return .terminateNow }

@@ -13,6 +13,9 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.1
   EdithCore:
     path: Packages/EdithCore
   EdithEditor:
@@ -25,12 +28,18 @@ targets:
     dependencies:
       - package: EdithCore
       - package: EdithEditor
+      - package: Sparkle
     info:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Edith
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Sparkle: the newest release's appcast.xml, and the public half of
+        # the EdDSA key that signs updates (the private one is in the
+        # Keychain of whoever runs scripts/release.sh).
+        SUFeedURL: https://github.com/mkay/edith-mac/releases/latest/download/appcast.xml
+        SUPublicEDKey: 0Y6FW5RnUgQp+PJmwd/vOKi6DsNYekvfui1KyOn/VEI=
         LSApplicationCategoryType: public.app-category.developer-tools
         NSHumanReadableCopyright: "© 2026 Kreuder. GPL-3.0-or-later."
     settings:

@@ -24,5 +24,9 @@
 	<string>public.app-category.developer-tools</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Kreuder. GPL-3.0-or-later.</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/mkay/edith-mac/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>0Y6FW5RnUgQp+PJmwd/vOKi6DsNYekvfui1KyOn/VEI=</string>
 </dict>
 </plist>

@@ -17,7 +17,13 @@ struct EdithApp: App {
                 .task { delegate.app = app }
         }
         .defaultSize(width: 1100, height: 700)
-        .commands { EdithCommands() }
+        .commands {
+            EdithCommands()
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { delegate.updater.checkForUpdates(nil) }
+                    .disabled(!delegate.updater.updater.canCheckForUpdates)
+            }
+        }
 
         Settings {
             SettingsView()

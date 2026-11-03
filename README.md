@@ -21,8 +21,18 @@ and drag Edith into Applications. It needs macOS 15 or later, on Apple Silicon o
 
 Edith isn't notarised by Apple, so the first launch needs one extra step:
 
-1. Open Edith. macOS says it can't verify it and doesn't open it.
-2. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Edith.
+1. Open Edith. macOS says it can't verify that Edith is free of malware and doesn't open
+   it. The dialog only offers **Done** and **Move to Bin**; choose **Done**.
+2. Open **System Settings → Privacy & Security**, scroll to the bottom, and click
+   **Open Anyway** next to the message about Edith. Enter your password. The button
+   only appears for about an hour after the blocked attempt, so try opening Edith again
+   if it's missing.
+
+If you prefer the Terminal, this clears the flag instead:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Edith.app
+```
 
 After that it opens normally. Updates arrive through **Edith → Check for Updates…**
 (and automatically, if you allow it), signed with Edith's own update key, and don't

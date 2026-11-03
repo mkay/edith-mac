@@ -264,7 +264,7 @@ public final class Workspace {
 
     /// Fetches the file again and hands over its text, unless only the
     /// mtime moved (a touch, an rsync): then the tab isn't disturbed.
-    func redownload(_ doc: Document) async {
+    public func redownload(_ doc: Document) async {
         let before = try? Data(contentsOf: doc.localURL)
         do {
             let fs = await session.transferConnection()

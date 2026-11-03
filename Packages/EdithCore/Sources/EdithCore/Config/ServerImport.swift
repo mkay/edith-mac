@@ -18,19 +18,24 @@ public struct ImportResult: Equatable, Sendable {
 public struct ServerFile: Sendable {
     public var servers: [Server]
     public var folders: [Folder]
+    /// An Edith export's encrypted passwords.
     public var secrets: SecretsBlob?
+    /// Plain passwords by server id, from a FileZilla file.
+    public var passwords: [String: String] = [:]
 }
 
 public enum ServerImportError: Error, LocalizedError {
     case notJSON(String)
     case noServerList
     case malformed
+    case unrecognized
 
     public var errorDescription: String? {
         switch self {
         case .notJSON(let detail): "This file is not valid JSON: \(detail)"
         case .noServerList: "This file does not contain an Edith server list."
         case .malformed: "This file's server list is malformed."
+        case .unrecognized: "Unrecognised file format: expected an Edith export, a servers.json or a FileZilla sitemanager.xml."
         }
     }
 }

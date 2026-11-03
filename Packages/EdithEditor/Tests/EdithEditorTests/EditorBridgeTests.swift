@@ -119,3 +119,14 @@ private final class EventLog {
     #expect(MonacoCatalog.resolveTheme("", dark: true) == "vs-dark")
     #expect(MonacoCatalog.resolveTheme("nord", dark: false) == "nord")
 }
+
+@Test func minifiesJavaScriptAndCSS() async throws {
+    let js = try await Minifier.shared.minify("function add(first, second) {\n  return first + second;\n}\nconsole.log(add(1, 2));\n", kind: .javaScript)
+    #expect(js.count < 60 && js.contains("console.log"))
+    let css = try await Minifier.shared.minify(".a {\n  color: #ff0000;\n  margin: 0px;\n}\n", kind: .css)
+    #expect(css == ".a{color:red;margin:0}")
+    await #expect(throws: Minifier.Failure.self) { _ = try await Minifier.shared.minify("function (", kind: .javaScript) }
+    #expect(Minifier.outputName(for: "app.js") == "app.min.js")
+    #expect(Minifier.outputName(for: "app.min.js") == "app.min.min.js")
+    #expect(Minifier.Kind(fileName: "x.MJS") == .javaScript && Minifier.Kind(fileName: "x.php") == nil)
+}

@@ -18,6 +18,7 @@ let package = Package(
         .testTarget(
             name: "EdithCoreTests",
             dependencies: ["EdithCore"],
+            exclude: ["Support/ftpserver.py"],
             resources: [.copy("Fixtures")]
         ),
     ]

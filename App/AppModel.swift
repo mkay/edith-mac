@@ -135,11 +135,22 @@ final class AppModel {
 
     // MARK: Import
 
-    func importServers(from url: URL) throws -> ImportResult {
-        let (servers, folders) = try ConfigStore.parseServerFile(url)
+    func importServers(_ file: ServerFile) throws -> ImportResult {
         var result = ImportResult()
-        try change { result = try config.importServers(servers, folders: folders) }
+        try change { result = try config.importServers(file.servers, folders: file.folders) }
         return result
+    }
+
+    /// Decrypts an export's passwords and saves those for `serverIDs` to
+    /// the Keychain, off the main thread: scrypt takes about 100 ms, and a
+    /// few hundred Keychain writes add up. Returns how many were saved.
+    func restoreSecrets(_ blob: SecretsBlob, passphrase: String, for serverIDs: Set<String>) async throws -> Int {
+        let keychain = keychain
+        return try await Task.detached {
+            let secrets = try blob.decrypt(passphrase: passphrase).filter { serverIDs.contains($0.key) }
+            for (id, secret) in secrets { try keychain.setSecret(secret, for: id) }
+            return secrets.count
+        }.value
     }
 
     // MARK: Pins

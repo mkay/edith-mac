@@ -15,6 +15,12 @@ public struct ImportResult: Equatable, Sendable {
     }
 }
 
+public struct ServerFile: Sendable {
+    public var servers: [Server]
+    public var folders: [Folder]
+    public var secrets: SecretsBlob?
+}
+
 public enum ServerImportError: Error, LocalizedError {
     case notJSON(String)
     case noServerList
@@ -31,9 +37,9 @@ public enum ServerImportError: Error, LocalizedError {
 
 extension ConfigStore {
     /// Servers and folders from an Edith export or a plain servers.json
-    /// (a backup, or the Linux app's own file). Saved passwords in an export
-    /// aren't read here.
-    public static func parseServerFile(_ url: URL) throws -> (servers: [Server], folders: [Folder]) {
+    /// (a backup, or the Linux app's own file), plus the export's encrypted
+    /// passwords if it has any.
+    public static func parseServerFile(_ url: URL) throws -> ServerFile {
         let object: Any
         do {
             object = try JSONSerialization.jsonObject(with: Data(contentsOf: url))
@@ -45,9 +51,13 @@ extension ConfigStore {
             throw ServerImportError.malformed
         }
         let decode = { (value: Any) in try JSONSerialization.data(withJSONObject: value) }
-        return (
-            try JSONDecoder().decode([Server].self, from: decode(servers)),
-            try JSONDecoder().decode([Folder].self, from: decode(dict["folders"] ?? []))
+        // A secrets block that doesn't parse is reported when it's decrypted,
+        // not here: the servers are still worth importing.
+        let secrets = (dict["secrets"] as? [String: Any]).flatMap { try? JSONDecoder().decode(SecretsBlob.self, from: decode($0)) }
+        return ServerFile(
+            servers: try JSONDecoder().decode([Server].self, from: decode(servers)),
+            folders: try JSONDecoder().decode([Folder].self, from: decode(dict["folders"] ?? [])),
+            secrets: secrets
         )
     }
 

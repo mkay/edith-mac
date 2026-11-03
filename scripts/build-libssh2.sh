@@ -75,11 +75,17 @@ universal="$WORK/universal"
 mkdir -p "$universal/Headers"
 lipo -create $(for a in "${ARCHS[@]}"; do echo "$WORK/$a/libCLibssh2.a"; done) -output "$universal/libCLibssh2.a"
 cp "$WORK/${ARCHS[0]}"/include/libssh2*.h "$universal/Headers/"
+# OpenSSL's headers too: EdithCore uses its scrypt to read the Linux app's
+# encrypted password exports. The installed headers are identical for both
+# architectures, so one copy serves.
+cp -R "$WORK/${ARCHS[0]}/include/openssl" "$universal/Headers/"
 cat > "$universal/Headers/module.modulemap" <<'EOF'
 module CLibssh2 {
     header "libssh2.h"
     header "libssh2_sftp.h"
     header "libssh2_publickey.h"
+    header "openssl/evp.h"
+    header "openssl/kdf.h"
     export *
 }
 EOF

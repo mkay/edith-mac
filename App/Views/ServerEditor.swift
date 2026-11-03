@@ -249,6 +249,45 @@ struct SecretPrompt: View {
     }
 }
 
+/// The passphrase chosen when the servers were exported, to unlock their passwords.
+struct PassphrasePrompt: View {
+    let request: PassphraseRequest
+    @Environment(\.dismiss) private var dismiss
+    @State private var passphrase = ""
+    @State private var answered = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Import Saved Passwords").font(.headline)
+            Text("This export includes passwords, encrypted with the passphrase chosen when it was exported. Enter it to save them to your Keychain.")
+                .fixedSize(horizontal: false, vertical: true)
+            if let error = request.error {
+                Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
+            }
+            SecureField("Export Passphrase", text: $passphrase)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit { finish(passphrase) }
+            HStack {
+                Button("Skip Passwords") { finish(nil) }
+                Spacer()
+                Button("Import Passwords") { finish(passphrase) }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(passphrase.isEmpty)
+            }
+        }
+        .padding(20)
+        .frame(width: 400)
+        .onDisappear { if !answered { request.answer(nil) } }
+    }
+
+    private func finish(_ value: String?) {
+        guard !answered else { return }
+        answered = true
+        request.answer(value)
+        dismiss()
+    }
+}
+
 /// An unknown host key: show its fingerprint and ask before trusting it.
 struct HostKeyPrompt: View {
     let request: HostKeyRequest

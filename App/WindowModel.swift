@@ -53,6 +53,13 @@ struct SecretRequest: Identifiable {
     let answer: (_ secret: String?, _ remember: Bool) -> Void
 }
 
+/// The passphrase protecting the passwords in a server export.
+struct PassphraseRequest: Identifiable {
+    let id = UUID()
+    let error: String?
+    let answer: (String?) -> Void
+}
+
 struct HostKeyRequest: Identifiable {
     let id = UUID()
     let challenge: HostKeyChallenge
@@ -123,6 +130,7 @@ final class WindowModel {
     // Presentation
     var serverEditor: ServerEditorRequest?
     var secretRequest: SecretRequest?
+    var passphraseRequest: PassphraseRequest?
     var hostKeyRequest: HostKeyRequest?
     var nameRequest: NameRequest?
     var infoFile: RemoteFile?
@@ -270,12 +278,48 @@ final class WindowModel {
         panel.allowedContentTypes = [.json]
         panel.showsHiddenFiles = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        attempt {
-            let result = try app.importServers(from: url)
-            var parts = ["\(result.added) added"]
-            if result.updated > 0 { parts.append("\(result.updated) updated") }
-            if result.foldersAdded > 0 { parts.append("\(result.foldersAdded) groups added") }
-            message = Message(title: "Servers Imported", text: parts.joined(separator: ", ") + ".")
+        let file: ServerFile
+        let result: ImportResult
+        do {
+            file = try ConfigStore.parseServerFile(url)
+            result = try app.importServers(file)
+        } catch {
+            message = Message(title: "Can't Import", text: error.localizedDescription)
+            return
+        }
+        var parts = ["\(result.added) added"]
+        if result.updated > 0 { parts.append("\(result.updated) updated") }
+        if result.foldersAdded > 0 { parts.append("\(result.foldersAdded) groups added") }
+        let summary = "Servers: " + parts.joined(separator: ", ") + "."
+
+        guard let blob = file.secrets else {
+            message = Message(title: "Servers Imported", text: summary)
+            return
+        }
+        Task { await restorePasswords(blob, for: Set(file.servers.map(\.id)), summary: summary) }
+    }
+
+    /// Asks for the export's passphrase until it's right or the user skips.
+    private func restorePasswords(_ blob: SecretsBlob, for ids: Set<String>, summary: String) async {
+        var error: String?
+        while true {
+            let passphrase: String? = await withCheckedContinuation { continuation in
+                passphraseRequest = PassphraseRequest(error: error) { continuation.resume(returning: $0) }
+            }
+            guard let passphrase else {
+                message = Message(title: "Servers Imported", text: summary + " Passwords weren't imported; you'll be asked for them when connecting.")
+                return
+            }
+            do {
+                let saved = try await app.restoreSecrets(blob, passphrase: passphrase, for: ids)
+                message = Message(title: "Servers Imported", text: summary + " \(saved) passwords saved to your Keychain.")
+                return
+            } catch SecretsError.wrongPassphrase {
+                error = "Wrong passphrase. Try again."
+            } catch {
+                message = Message(title: "Servers Imported, Passwords Not", text: summary + " " + error.localizedDescription)
+                return
+            }
         }
     }
 

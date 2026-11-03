@@ -19,9 +19,10 @@ private func emptyStore() throws -> ConfigStore {
 
 @Test func parsesLinuxServersFile() throws {
     let url = try #require(Bundle.module.url(forResource: "servers-linux", withExtension: "json", subdirectory: "Fixtures"))
-    let (servers, folders) = try ConfigStore.parseServerFile(url)
-    #expect(servers.count == 2)
-    #expect(folders.count == 1)
+    let file = try ConfigStore.parseServerFile(url)
+    #expect(file.servers.count == 2)
+    #expect(file.folders.count == 1)
+    #expect(file.secrets == nil)
 }
 
 @Test func rejectsWhatIsntAServerList() throws {

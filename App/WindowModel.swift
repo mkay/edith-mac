@@ -139,6 +139,10 @@ final class WindowModel {
     var message: Message?
     var showTransfers = false
 
+    /// The AppKit window, for what SwiftUI can't do: resizing the sidebar.
+    @ObservationIgnored weak var hostWindow: NSWindow?
+    @ObservationIgnored private var sidebarWidthBeforeDetails: CGFloat?
+
     init(app: AppModel) {
         self.app = app
     }
@@ -217,6 +221,43 @@ final class WindowModel {
         showFileDetails = false
         showTransfers = false
         Task { await connection.session.close() }
+    }
+
+    // MARK: Sidebar
+
+    /// The detail columns need room, so turning them on widens the sidebar
+    /// (as in the Linux app) and turning them off puts it back.
+    /// NavigationSplitView can't set a column's width, so this moves the
+    /// divider of the NSSplitView underneath it.
+    func fitSidebar(toDetails show: Bool) {
+        guard let split = hostWindow?.contentView.flatMap(Self.splitView(in:)),
+              let sidebar = split.arrangedSubviews.first
+        else { return }
+        let target: CGFloat
+        if show {
+            sidebarWidthBeforeDetails = sidebar.frame.width
+            // Leave the main area usable on narrow windows.
+            target = max(sidebar.frame.width, min(720, split.bounds.width - 360))
+        } else if let previous = sidebarWidthBeforeDetails {
+            target = previous
+            sidebarWidthBeforeDetails = nil
+        } else {
+            return
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            context.allowsImplicitAnimation = true
+            split.setPosition(target, ofDividerAt: 0)
+            split.layoutSubtreeIfNeeded()
+        }
+    }
+
+    private static func splitView(in view: NSView) -> NSSplitView? {
+        if let split = view as? NSSplitView { return split }
+        for child in view.subviews {
+            if let found = splitView(in: child) { return found }
+        }
+        return nil
     }
 
     // MARK: Servers

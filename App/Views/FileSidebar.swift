@@ -14,7 +14,7 @@ struct FileSidebar: View {
         @Bindable var browser = connection.browser
         @Bindable var window = window
         VStack(spacing: 0) {
-            HStack(spacing: 2) {
+            HStack(spacing: 14) {
                 Button("Upload", systemImage: "square.and.arrow.up") { window.chooseUploads() }
                     .help("Upload files or folders here")
                 Button("Refresh", systemImage: "arrow.clockwise") { window.refresh() }
@@ -87,13 +87,15 @@ struct AncestorMenu: View {
     let browser: Browser
 
     var body: some View {
-        Menu {
+        // A picker rather than a Menu: it stretches to the sidebar's width.
+        Picker("Folder", selection: Binding(get: { browser.path }, set: { path in Task { await browser.open(path) } })) {
             ForEach(remoteAncestors(browser.path), id: \.self) { path in
-                Button(remoteName(path)) { Task { await browser.open(path) } }
+                Label(remoteName(path), systemImage: path == "/" ? "externaldrive" : "folder").tag(path)
             }
-        } label: {
-            Label(remoteName(browser.path), systemImage: "folder")
         }
+        .labelsHidden()
+        .pickerStyle(.menu)
+        .frame(maxWidth: .infinity)
         .help(browser.path)
     }
 }
@@ -140,7 +142,7 @@ struct PathBar: View {
 
     var body: some View {
         let parts = Array(remoteAncestors(browser.path).reversed())
-        HStack(spacing: 2) {
+        HStack(spacing: 4) {
             ForEach(Array(parts.enumerated()), id: \.element) { index, path in
                 if index > 0 {
                     Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
@@ -160,7 +162,8 @@ struct PathBar: View {
             }
         }
         .lineLimit(1)
-        .frame(maxWidth: 520)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: 560)
     }
 }
 

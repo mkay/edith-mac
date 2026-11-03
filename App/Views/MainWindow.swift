@@ -32,8 +32,8 @@ private struct WindowContent: View {
         } detail: {
             detail
         }
-        .navigationTitle(title)
-        .navigationSubtitle(subtitle)
+        // Connected, the breadcrumbs say where you are; a title would repeat them.
+        .navigationTitle(window.connection == nil ? title : "")
         .toolbar { toolbar }
         .focusedSceneValue(\.windowModel, window)
         .sheet(item: $window.serverEditor) { ServerEditor(request: $0) }
@@ -56,6 +56,8 @@ private struct WindowContent: View {
         }
         .environment(window)
         .onDisappear { window.disconnect() }
+        .background(WindowAccessor { window.hostWindow = $0 })
+        .onChange(of: window.showFileDetails) { _, show in window.fitSidebar(toDetails: show) }
         .debugHooks(window)
     }
 
@@ -67,7 +69,7 @@ private struct WindowContent: View {
     @ViewBuilder private var sidebar: some View {
         if let connection = window.connection {
             FileSidebar(connection: connection)
-                .navigationSplitViewColumnWidth(min: 240, ideal: window.showFileDetails ? 720 : 300, max: 1200)
+                .navigationSplitViewColumnWidth(min: 240, ideal: 300, max: 1200)
         } else {
             ServerSidebar()
                 .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 400)
@@ -95,11 +97,6 @@ private struct WindowContent: View {
         case .connecting(let server): server.displayName
         case .connected(let connection): connection.server.displayName
         }
-    }
-
-    private var subtitle: String {
-        if let connection = window.connection { return connection.browser.path }
-        return ""
     }
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
@@ -139,4 +136,19 @@ private struct WindowContent: View {
             }
         }
     }
+}
+
+/// Hands over the NSWindow a SwiftUI view ends up in.
+struct WindowAccessor: NSViewRepresentable {
+    let found: (NSWindow) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { [weak view] in
+            if let window = view?.window { found(window) }
+        }
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {}
 }

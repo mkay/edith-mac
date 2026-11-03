@@ -36,11 +36,12 @@ xcodegen generate >/dev/null
 
 echo "== Building Edith $VERSION ($BUILD)"
 xcodebuild -project Edith.xcodeproj -scheme Edith -configuration Release \
+    -destination "generic/platform=macOS" \
     -derivedDataPath build/Release MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD" \
     build >/dev/null
 APP="build/Release/Build/Products/Release/Edith.app"
 codesign --verify --deep --strict "$APP"
-codesign -dv "$APP" 2>&1 | grep -E "^Authority=Apple Development" >/dev/null || {
+codesign -dvv "$APP" 2>&1 | grep -E "^Authority=Apple Development" >/dev/null || {
     echo "Not signed with an Apple Development certificate; Keychain access would break between versions." >&2
     exit 1
 }

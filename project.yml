@@ -38,8 +38,12 @@ targets:
         # the real filesystem. Distribution is Developer ID + notarisation.
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: YES
+        # Apple Development for local builds keeps the signature stable,
+        # so Keychain items stay accessible across rebuilds. Release builds
+        # will switch to Developer ID.
         CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: Z7MGLA2YTJ
         GENERATE_INFOPLIST_FILE: NO
 schemes:
   Edith:

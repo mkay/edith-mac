@@ -28,6 +28,11 @@ struct EditorPreferences: Equatable {
     /// Extension (no dot) to Monaco language id.
     var syntaxAssociations: [String: String] = [:]
     var singleClickOpen = false
+    /// A local folder of scripts to upload anywhere (adminer.php and the like).
+    var toolsFolder = ""
+    /// Extension (no dot) to the app that opens it, by path. The Linux app's
+    /// `file_associations` hold desktop ids, so the Mac keeps its own key.
+    var appAssociations: [String: String] = [:]
 
     static func load(from config: ConfigStore) -> EditorPreferences {
         var p = EditorPreferences()
@@ -46,6 +51,8 @@ struct EditorPreferences: Equatable {
         p.overrides = config.preferenceJSON("editor_overrides") ?? p.overrides
         p.syntaxAssociations = config.preference("syntax_associations") ?? p.syntaxAssociations
         p.singleClickOpen = config.preference("single_click_open") ?? p.singleClickOpen
+        p.toolsFolder = config.preference("tools_folder") ?? p.toolsFolder
+        p.appAssociations = config.preference("mac_file_associations") ?? p.appAssociations
         return p
     }
 
@@ -65,6 +72,8 @@ struct EditorPreferences: Equatable {
         if overrides != old.overrides { try config.setPreferenceJSON("editor_overrides", overrides) }
         if syntaxAssociations != old.syntaxAssociations { try config.setPreference("syntax_associations", syntaxAssociations) }
         if singleClickOpen != old.singleClickOpen { try config.setPreference("single_click_open", singleClickOpen) }
+        if toolsFolder != old.toolsFolder { try config.setPreference("tools_folder", toolsFolder) }
+        if appAssociations != old.appAssociations { try config.setPreference("mac_file_associations", appAssociations) }
     }
 
     func configuration(dark: Bool) -> EditorConfiguration {

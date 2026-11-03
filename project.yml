@@ -28,6 +28,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Edith
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.developer-tools
         NSHumanReadableCopyright: "© 2026 Kreuder. GPL-3.0-or-later."
     settings:

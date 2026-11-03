@@ -65,6 +65,7 @@ struct FileSidebar: View {
     }
 
     private var statusText: String {
+        if let notice = window.notice { return notice }
         if let job = connection.transfers.active {
             if case .running(let fraction?) = job.state { return "\(job.label) — \(Int(fraction * 100))%" }
             return job.label

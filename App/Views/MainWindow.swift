@@ -18,7 +18,11 @@ struct MainWindow: View {
             }
         }
         .task {
-            if window == nil { window = WindowModel(app: app) }
+            if window == nil {
+                let model = WindowModel(app: app)
+                window = model
+                if app.shouldShowWhatsNew(version: WhatsNewView.version) { model.showWhatsNew = true }
+            }
         }
     }
 }
@@ -41,6 +45,9 @@ private struct WindowContent: View {
         .sheet(item: $window.hostKeyRequest) { HostKeyPrompt(request: $0) }
         .sheet(item: $window.certificateRequest) { CertificatePrompt(request: $0) }
         .sheet(item: $window.passphraseRequest) { PassphrasePrompt(request: $0) }
+        .sheet(item: $window.exportPassphraseRequest) { NewPassphrasePrompt(request: $0) }
+        .sheet(isPresented: $window.showSupport) { SupportView() }
+        .sheet(isPresented: $window.showWhatsNew) { WhatsNewView() }
         .sheet(item: $window.nameRequest) { NamePrompt(request: $0) }
         .sheet(item: $window.infoFile) { FileInfoSheet(file: $0) }
         .sheet(item: $window.folderChoice) { FolderChooser(choice: $0) }

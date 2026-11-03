@@ -28,6 +28,17 @@ struct EdithCommands: Commands {
             Divider()
             Button("Import Servers…") { window?.importServers() }
                 .disabled(window == nil)
+            Button("Export Servers…") { window?.exportServers() }
+                .disabled(window == nil)
+        }
+
+        CommandGroup(replacing: .help) {
+            Button("What's New in Edith") { window?.showWhatsNew = true }
+                .disabled(window == nil)
+            Button("Support Edith…") { window?.showSupport = true }
+                .disabled(window == nil)
+            Divider()
+            Link("Edith on GitHub", destination: URL(string: "https://github.com/mkay/edith")!)
         }
 
         CommandGroup(replacing: .saveItem) {

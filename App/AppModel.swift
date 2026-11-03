@@ -28,6 +28,9 @@ final class AppModel {
     /// `EDITH_CONFIG_DIR` points the app at another settings folder, with its
     /// own known_hosts and Keychain service, for trying things out without
     /// touching the real configuration.
+    /// No settings file existed at launch: a fresh install.
+    let isFirstRun: Bool
+
     init(environment: [String: String] = ProcessInfo.processInfo.environment) {
         if let dir = environment["EDITH_CONFIG_DIR"] {
             let url = URL(fileURLWithPath: (dir as NSString).expandingTildeInPath, isDirectory: true)
@@ -41,9 +44,20 @@ final class AppModel {
             certificates = CertificateStore()
             keychain = Keychain()
         }
+        isFirstRun = !config.exists
         config.backupNow()
         reload()
         editorPreferences = EditorPreferences.load(from: config)
+    }
+
+    /// Whether this launch is the first on a new version, recording that it
+    /// was seen. A fresh install has nothing new to report.
+    func shouldShowWhatsNew(version: String) -> Bool {
+        let key = "mac_whats_new_seen"
+        let seen: String? = config.preference(key)
+        guard seen != version else { return false }
+        try? config.setPreference(key, version)
+        return !isFirstRun && !WhatsNewView.notes.isEmpty
     }
 
     func setEditorPreferences(_ new: EditorPreferences) throws {
@@ -166,6 +180,22 @@ final class AppModel {
     }
 
     // MARK: Import
+
+    /// Every saved password, by server id, for an export. Off the main
+    /// thread: a few hundred Keychain reads take a moment.
+    func collectSecrets() async -> [String: String] {
+        let keychain = keychain
+        let ids = servers.map(\.id)
+        return await Task.detached {
+            var found: [String: String] = [:]
+            for id in ids { if let secret = try? keychain.secret(for: id) { found[id] = secret } }
+            return found
+        }.value
+    }
+
+    func savePasswords(_ passwords: [String: String]) throws {
+        for (id, password) in passwords { try keychain.setSecret(password, for: id) }
+    }
 
     func importServers(_ file: ServerFile) throws -> ImportResult {
         var result = ImportResult()

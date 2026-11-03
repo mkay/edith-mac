@@ -24,6 +24,8 @@ final class Connection {
     let editor: EditorController
     private(set) var pins: [Pin] = []
     private(set) var recents: [String] = []
+    /// Files opened in other apps, watched so their saves are uploaded.
+    @ObservationIgnored var externalEdits: [String: FileWatcher] = [:]
     private let app: AppModel
 
     init(session: Session, app: AppModel, window: WindowModel) {
@@ -165,6 +167,9 @@ final class WindowModel {
     var serverEditor: ServerEditorRequest?
     var secretRequest: SecretRequest?
     var passphraseRequest: PassphraseRequest?
+    var exportPassphraseRequest: PassphraseRequest?
+    var showSupport = false
+    var showWhatsNew = false
     var hostKeyRequest: HostKeyRequest?
     var certificateRequest: CertificateRequest?
     var nameRequest: NameRequest?
@@ -174,6 +179,18 @@ final class WindowModel {
     var choice: ChoiceRequest?
     var message: Message?
     var showTransfers = false
+    /// A short note in the sidebar's status line ("Uploaded index.php").
+    private(set) var notice: String?
+    @ObservationIgnored private var noticeTask: Task<Void, Never>?
+
+    func announce(_ text: String) {
+        notice = text
+        noticeTask?.cancel()
+        noticeTask = Task {
+            try? await Task.sleep(for: .seconds(4))
+            if !Task.isCancelled { notice = nil }
+        }
+    }
 
     /// The AppKit window, for what SwiftUI can't do: resizing the sidebar,
     /// and asking before a window with unsaved changes closes.
@@ -314,6 +331,8 @@ final class WindowModel {
     func forceDisconnect() {
         guard let connection else { return }
         connection.editor.shutdown()
+        connection.externalEdits.values.forEach { $0.cancel() }
+        connection.externalEdits = [:]
         hostWindow?.isDocumentEdited = false
         phase = .disconnected
         showFileDetails = false
@@ -413,14 +432,14 @@ final class WindowModel {
     func importServers() {
         let panel = NSOpenPanel()
         panel.title = "Import Servers"
-        panel.message = "Choose an Edith export or a servers.json, for example from the Linux app (~/.config/edith/servers.json)."
-        panel.allowedContentTypes = [.json]
+        panel.message = "Choose an Edith export, a servers.json (the Linux app's is in ~/.config/edith) or a FileZilla sitemanager.xml."
+        panel.allowedContentTypes = [.json, .xml]
         panel.showsHiddenFiles = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let file: ServerFile
         let result: ImportResult
         do {
-            file = try ConfigStore.parseServerFile(url)
+            file = try ServerFile.read(url)
             result = try app.importServers(file)
         } catch {
             message = Message(title: "Can't Import", text: error.localizedDescription)
@@ -431,11 +450,60 @@ final class WindowModel {
         if result.foldersAdded > 0 { parts.append("\(result.foldersAdded) groups added") }
         let summary = "Servers: " + parts.joined(separator: ", ") + "."
 
+        if !file.passwords.isEmpty {
+            let count = file.passwords.count
+            confirmation = Confirmation(
+                title: "Save \(count) Passwords to Keychain?",
+                message: summary + " The FileZilla file also has passwords for \(count) servers. Save them to your Keychain?",
+                action: "Save Passwords", destructive: false
+            ) { [self] in
+                do {
+                    try app.savePasswords(file.passwords)
+                    announce("\(count) passwords saved to your Keychain")
+                } catch {
+                    message = Message(title: "Couldn't Save Passwords", text: error.localizedDescription)
+                }
+            }
+            return
+        }
         guard let blob = file.secrets else {
             message = Message(title: "Servers Imported", text: summary)
             return
         }
         Task { await restorePasswords(blob, for: Set(file.servers.map(\.id)), summary: summary) }
+    }
+
+    /// Writes the server list to a file in the Linux app's format, with the
+    /// passwords encrypted under a passphrase if wanted.
+    func exportServers() {
+        let panel = NSSavePanel()
+        panel.title = "Export Servers"
+        panel.nameFieldStringValue = ConfigStore.defaultExportName()
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        Task {
+            let withPasswords = await choose(
+                title: "Include Passwords?",
+                message: "Passwords are encrypted with a passphrase you choose, and needed again when importing. Without them, every server asks for its password on first connect.",
+                buttons: [.init("Include Passwords"), .init("Without Passwords")]
+            )
+            guard let withPasswords else { return }
+            var blob: SecretsBlob?
+            if withPasswords == 0 {
+                guard let passphrase = await withCheckedContinuation({ continuation in
+                    exportPassphraseRequest = PassphraseRequest(error: nil) { continuation.resume(returning: $0) }
+                }) else { return }
+                let secrets = await app.collectSecrets()
+                blob = try? await Task.detached { try SecretsBlob.encrypt(secrets, passphrase: passphrase) }.value
+            }
+            do {
+                let data = try ConfigStore.exportData(servers: app.servers, folders: app.folders, secrets: blob)
+                try ConfigStore.writeExport(data, to: url, hasSecrets: blob != nil)
+                message = Message(title: "Servers Exported", text: "\(app.servers.count) servers\(blob == nil ? "" : " and their passwords") written to \(url.lastPathComponent).")
+            } catch {
+                message = Message(title: "Couldn't Export", text: error.localizedDescription)
+            }
+        }
     }
 
     /// Asks for the export's passphrase until it's right or the user skips.

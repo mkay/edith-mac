@@ -130,6 +130,7 @@ private struct EditorSettingsTab: View {
 private struct FileSettingsTab: View {
     @Environment(AppModel.self) private var app
     @State private var newExtension = ""
+    @State private var appExtension = ""
     @State private var newLanguage = "plaintext"
 
     var body: some View {
@@ -137,6 +138,52 @@ private struct FileSettingsTab: View {
         Form {
             Section("Browsing") {
                 Toggle("Open files and folders with a single click", isOn: pref(\.singleClickOpen))
+                LabeledContent("Tools Folder") {
+                    HStack {
+                        Text(app.editorPreferences.toolsFolder.isEmpty ? "None" : (app.editorPreferences.toolsFolder as NSString).abbreviatingWithTildeInPath)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                        Button("Choose…", action: chooseToolsFolder)
+                        if !app.editorPreferences.toolsFolder.isEmpty {
+                            Button("Clear", systemImage: "xmark.circle.fill") { pref(\.toolsFolder).wrappedValue = "" }
+                                .labelStyle(.iconOnly)
+                                .buttonStyle(.borderless)
+                        }
+                    }
+                }
+            }
+
+            Section {
+                ForEach(app.editorPreferences.appAssociations.sorted(by: { $0.key < $1.key }), id: \.key) { ext, path in
+                    LabeledContent(".\(ext)") {
+                        HStack {
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 16, height: 16)
+                            Text(FileManager.default.displayName(atPath: path).replacingOccurrences(of: ".app", with: ""))
+                            Button("Remove", systemImage: "minus.circle") { setApp(ext, nil) }
+                                .labelStyle(.iconOnly)
+                                .buttonStyle(.borderless)
+                        }
+                    }
+                }
+                HStack {
+                    TextField("Extension", text: $appExtension, prompt: Text("psd"))
+                        .frame(width: 90)
+                    Button("Choose App…") {
+                        let panel = NSOpenPanel()
+                        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+                        panel.allowedContentTypes = [.application]
+                        if panel.runModal() == .OK, let url = panel.url {
+                            setApp(appExtension, url.path)
+                            appExtension = ""
+                        }
+                    }
+                    .disabled(normalized(appExtension).isEmpty)
+                }
+            } header: {
+                Text("Open With")
+            } footer: {
+                Text("“Open with…” in the file menu uses these apps instead of the system default. Saving there uploads the file again.")
             }
             Section {
                 ForEach(app.editorPreferences.syntaxAssociations.sorted(by: { $0.key < $1.key }), id: \.key) { ext, lang in
@@ -174,6 +221,24 @@ private struct FileSettingsTab: View {
 
     private func normalized(_ ext: String) -> String {
         ext.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased()
+    }
+
+    private func setApp(_ ext: String, _ path: String?) {
+        var new = app.editorPreferences
+        new.appAssociations[normalized(ext)] = path
+        try? app.setEditorPreferences(new)
+    }
+
+    private func chooseToolsFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        if panel.runModal() == .OK, let url = panel.url {
+            var new = app.editorPreferences
+            new.toolsFolder = url.path
+            try? app.setEditorPreferences(new)
+        }
     }
 
     private func setAssociation(_ ext: String, _ language: String?) {

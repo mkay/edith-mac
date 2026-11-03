@@ -132,6 +132,12 @@ final class LocalSSHServer: Sendable {
         return client
     }
 
+    /// A saved-server entry for this server, using a key without passphrase.
+    func server(key: String = "ed25519", initialDirectory: String = "/") -> Server {
+        Server(name: "Local", host: "127.0.0.1", port: port, username: user, keyFile: keyPath(key),
+               authMethod: .key, initialDirectory: initialDirectory)
+    }
+
     /// A fresh, empty remote directory for one test.
     func scratch() throws -> String {
         let path = files + "/" + UUID().uuidString.prefix(8)

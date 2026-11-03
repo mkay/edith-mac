@@ -39,6 +39,14 @@ The SFTP tests start a throwaway OpenSSH server (`/usr/sbin/sshd`) on a free
 loopback port, running as you with key auth only, and stop it when the run
 ends. They read and write only inside a temp directory.
 
+## Translations
+
+English and German. The strings live in String Catalogs: `App/Localizable.xcstrings`
+for the app and `Packages/EdithCore/Sources/EdithCore/Resources/Localizable.xcstrings`
+for error messages. After changing user-visible text, run `scripts/sync-strings.sh`:
+it adds new strings to the catalogs and lists the ones still without German. Terms
+follow the Linux app's `po/de.po`.
+
 ## Sharing with the Linux app
 
 - `servers.json` and server exports use the Linux app's format, so both

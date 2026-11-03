@@ -102,7 +102,7 @@ struct EdithCommands: Commands {
             Button("Refresh") { window?.refresh() }
                 .keyboardShortcut("r")
                 .disabled(browser == nil)
-            Button(browser?.showHidden == true ? "Hide Hidden Files" : "Show Hidden Files") {
+            Button(browser?.showHidden == true ? String(localized: "Hide Hidden Files") : String(localized: "Show Hidden Files")) {
                 browser?.showHidden.toggle()
             }
             .keyboardShortcut(".", modifiers: [.command, .shift])
@@ -110,7 +110,7 @@ struct EdithCommands: Commands {
         }
 
         CommandGroup(after: .sidebar) {
-            Button(window?.showFileDetails == true ? "Show Names Only" : "Show File Details") {
+            Button(window?.showFileDetails == true ? String(localized: "Show Names Only") : String(localized: "Show File Details")) {
                 window?.showFileDetails.toggle()
             }
             .disabled(window?.connection == nil)

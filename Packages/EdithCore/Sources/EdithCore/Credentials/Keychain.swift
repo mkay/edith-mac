@@ -9,7 +9,7 @@ public struct KeychainError: Error, LocalizedError {
 
     public var errorDescription: String? {
         let message = SecCopyErrorMessageString(status, nil) as String? ?? "error \(status)"
-        return "Keychain: \(message)"
+        return String(localized: "Keychain: \(message)", bundle: .module)
     }
 }
 

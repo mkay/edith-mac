@@ -1,0 +1,578 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ failed: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ fehlgeschlagen: %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ failed: %2$@"
+          }
+        }
+      }
+    },
+    "%@: the server reported an error (SFTP status %llu).": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: Der Server meldet einen Fehler (SFTP-Status %2$llu)."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@: the server reported an error (SFTP status %2$llu)."
+          }
+        }
+      }
+    },
+    "Already connected.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bereits verbunden."
+          }
+        }
+      }
+    },
+    "Authentication failed: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmeldung fehlgeschlagen: %@"
+          }
+        }
+      }
+    },
+    "Can't connect to %@:%lld: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Verbindung zu %1$@:%2$lld: %3$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Can't connect to %1$@:%2$lld: %3$@"
+          }
+        }
+      }
+    },
+    "Can't resolve %@: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ kann nicht aufgelöst werden: %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Can't resolve %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "Can't write %@.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ kann nicht geschrieben werden."
+          }
+        }
+      }
+    },
+    "Connection failed: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbindung fehlgeschlagen: %@"
+          }
+        }
+      }
+    },
+    "Couldn't create an SSH session.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die SSH-Sitzung konnte nicht erstellt werden."
+          }
+        }
+      }
+    },
+    "Couldn't open an exec channel: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es konnte kein Befehlskanal geöffnet werden: %@"
+          }
+        }
+      }
+    },
+    "Couldn't set up TLS.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TLS konnte nicht eingerichtet werden."
+          }
+        }
+      }
+    },
+    "Couldn't start TLS.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TLS konnte nicht gestartet werden."
+          }
+        }
+      }
+    },
+    "FTP servers can't run commands.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FTP-Server können keine Befehle ausführen."
+          }
+        }
+      }
+    },
+    "Keychain: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schlüsselbund: %@"
+          }
+        }
+      }
+    },
+    "Names can't contain “/”.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Namen dürfen kein „/“ enthalten."
+          }
+        }
+      }
+    },
+    "No password or key is set, and the SSH agent isn't available.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weder Passwort noch Schlüssel sind gesetzt, und der SSH-Agent ist nicht verfügbar."
+          }
+        }
+      }
+    },
+    "Not connected.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht verbunden."
+          }
+        }
+      }
+    },
+    "Permission denied: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zugriff verweigert: %@"
+          }
+        }
+      }
+    },
+    "TLS handshake failed: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TLS-Handshake fehlgeschlagen: %@"
+          }
+        }
+      }
+    },
+    "TLS read failed: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TLS-Lesen fehlgeschlagen: %@"
+          }
+        }
+      }
+    },
+    "The command timed out.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Befehl hat das Zeitlimit überschritten."
+          }
+        }
+      }
+    },
+    "The encrypted data connection failed: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die verschlüsselte Datenverbindung ist fehlgeschlagen: %@"
+          }
+        }
+      }
+    },
+    "The host key for %@ has changed. The server now presents %@ %@, which doesn't match the key on record. This can mean someone is intercepting the connection.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Hostschlüssel von %1$@ hat sich geändert. Der Server zeigt jetzt %2$@ %3$@, was nicht zum gespeicherten Schlüssel passt. Das kann bedeuten, dass jemand die Verbindung abfängt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The host key for %1$@ has changed. The server now presents %2$@ %3$@, which doesn't match the key on record. This can mean someone is intercepting the connection."
+          }
+        }
+      }
+    },
+    "The host key for %@ is marked as revoked.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Hostschlüssel von %@ ist als widerrufen markiert."
+          }
+        }
+      }
+    },
+    "The name can't be empty.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Name darf nicht leer sein."
+          }
+        }
+      }
+    },
+    "The saved passwords in this file are damaged.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die gespeicherten Passwörter in dieser Datei sind beschädigt."
+          }
+        }
+      }
+    },
+    "The server closed the connection.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server hat die Verbindung geschlossen."
+          }
+        }
+      }
+    },
+    "The server didn't change the permissions: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server hat die Rechte nicht geändert: %@"
+          }
+        }
+      }
+    },
+    "The server doesn't support FTPS (AUTH TLS): %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server unterstützt kein FTPS (AUTH TLS): %@"
+          }
+        }
+      }
+    },
+    "The server is out of space.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Server ist kein Platz mehr."
+          }
+        }
+      }
+    },
+    "The server refused encrypted transfers: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server lehnt verschlüsselte Übertragungen ab: %@"
+          }
+        }
+      }
+    },
+    "The server refused passive mode: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server lehnt den passiven Modus ab: %@"
+          }
+        }
+      }
+    },
+    "The server refused the SFTP subsystem: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server lehnt das SFTP-Subsystem ab: %@"
+          }
+        }
+      }
+    },
+    "The server refused to run the command: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server lehnt die Ausführung des Befehls ab: %@"
+          }
+        }
+      }
+    },
+    "The server sent no certificate.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server hat kein Zertifikat gesendet."
+          }
+        }
+      }
+    },
+    "The server sent no host key.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server hat keinen Hostschlüssel gesendet."
+          }
+        }
+      }
+    },
+    "The server's host key was not accepted.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Hostschlüssel des Servers wurde nicht akzeptiert."
+          }
+        }
+      }
+    },
+    "The settings file %@ can't be read: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Einstellungsdatei %1$@ kann nicht gelesen werden: %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The settings file %1$@ can't be read: %2$@"
+          }
+        }
+      }
+    },
+    "This file does not contain an Edith server list.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei enthält keine Edith-Serverliste."
+          }
+        }
+      }
+    },
+    "This file is not valid JSON: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei ist kein gültiges JSON: %@"
+          }
+        }
+      }
+    },
+    "This file's saved passwords are in a format this version can't read.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die gespeicherten Passwörter dieser Datei liegen in einem Format vor, das diese Version nicht lesen kann."
+          }
+        }
+      }
+    },
+    "This file's server list is malformed.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Serverliste in dieser Datei ist fehlerhaft."
+          }
+        }
+      }
+    },
+    "Unexpected MLST reply: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unerwartete MLST-Antwort: %@"
+          }
+        }
+      }
+    },
+    "Unexpected reply from the server: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unerwartete Antwort vom Server: %@"
+          }
+        }
+      }
+    },
+    "Unrecognised file format: expected an Edith export, a servers.json or a FileZilla sitemanager.xml.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unbekanntes Dateiformat: Erwartet wird ein Edith-Export, eine servers.json oder eine FileZilla-sitemanager.xml."
+          }
+        }
+      }
+    },
+    "Writing to the server failed.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schreiben auf den Server fehlgeschlagen."
+          }
+        }
+      }
+    },
+    "Wrong passphrase.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falsche Passphrase."
+          }
+        }
+      }
+    },
+    "“%@” already exists.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ existiert bereits."
+          }
+        }
+      }
+    },
+    "“%@” doesn't exist.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ existiert nicht."
+          }
+        }
+      }
+    },
+    "“%@” is a %@ file, and some of the new text can't be written in %@.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%1$@“ ist eine %2$@-Datei, und ein Teil des neuen Texts lässt sich nicht in %3$@ schreiben."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "“%1$@” is a %2$@ file, and some of the new text can't be written in %3$@."
+          }
+        }
+      }
+    },
+    "“%@” isn't a valid name.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ ist kein gültiger Name."
+          }
+        }
+      }
+    },
+    "“%@” isn't empty.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ ist nicht leer."
+          }
+        }
+      }
+    },
+    "“%@” looks like a binary file, which the editor can't show.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ scheint eine Binärdatei zu sein, die der Editor nicht anzeigen kann."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -103,7 +103,7 @@ private struct TabButton: View {
         .help(doc.remotePath)
         .contextMenu {
             Button("Show in Sidebar") { window.reveal(doc.remotePath) }
-            Button(window.connection?.isPinned(doc.remotePath) == true ? "Unpin" : "Pin") {
+            Button(window.connection?.isPinned(doc.remotePath) == true ? String(localized: "Unpin") : String(localized: "Pin")) {
                 window.togglePin(RemoteFile(name: doc.name, path: doc.remotePath))
             }
             Button("Copy Path") { window.copyPaths([RemoteFile(name: doc.name, path: doc.remotePath)]) }
@@ -139,7 +139,7 @@ private struct TabContent: View {
                         Toggle("Preview", systemImage: "eye", isOn: Binding(get: { tab.showPreview }, set: { tab.showPreview = $0 }))
                             .toggleStyle(.button)
                             .labelStyle(.iconOnly)
-                            .help(tab.showPreview ? "Hide the preview" : "Show the preview (updates on save)")
+                            .help(tab.showPreview ? String(localized: "Hide the preview") : String(localized: "Show the preview (updates on save)"))
                             .padding(8)
                     }
                 } else {
@@ -174,7 +174,7 @@ struct ImageTabView: View {
                         .padding(20)
                 } else {
                     ContentUnavailableView("Can't Show This Image", systemImage: "photo",
-                                           description: Text(url.pathExtension.lowercased() == "svg" ? "The SVG may have an error. The preview updates when you save." : ""))
+                                           description: Text(url.pathExtension.lowercased() == "svg" ? String(localized: "The SVG may have an error. The preview updates when you save.") : ""))
                 }
             }
             if showsInfo, let image {
@@ -231,7 +231,7 @@ private struct StatusBar: View {
             if let bridge = tab.bridge {
                 Button("Ln \(tab.line), Col \(tab.column)") { bridge.gotoLine() }
                     .help("Go to line (⌘L)")
-                Button(tab.wordWrap ? "Wrap" : "No Wrap") { bridge.toggleWrap() }
+                Button(tab.wordWrap ? String(localized: "Wrap") : String(localized: "No Wrap")) { bridge.toggleWrap() }
                     .help("Toggle word wrap (⌥Z)")
                 Button(MonacoCatalog.languageName(tab.language)) { pickingLanguage = true }
                     .help("Change syntax highlighting")
@@ -242,7 +242,7 @@ private struct StatusBar: View {
                             pickingLanguage = false
                         }
                     }
-                Button(tab.insertSpaces ? "Spaces: \(tab.tabSize)" : "Tab: \(tab.tabSize)") { pickingIndent = true }
+                Button(tab.insertSpaces ? String(localized: "Spaces: \(tab.tabSize)") : String(localized: "Tab: \(tab.tabSize)")) { pickingIndent = true }
                     .help("Change indentation")
                     .popover(isPresented: $pickingIndent, arrowEdge: .top) {
                         Form {

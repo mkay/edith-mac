@@ -210,9 +210,9 @@ final class WindowModel {
         guard hasUnsavedChanges else { return true }
         Task {
             let answer = await choose(
-                title: "Close Window with Unsaved Changes?",
-                message: "Your unsaved changes will be lost.",
-                buttons: [.init("Discard and Close", role: .destructive)]
+                title: String(localized: "Close Window with Unsaved Changes?"),
+                message: String(localized: "Your unsaved changes will be lost."),
+                buttons: [.init(String(localized: "Discard and Close"), role: .destructive)]
             )
             if answer == 0 {
                 forceDisconnect()
@@ -288,7 +288,7 @@ final class WindowModel {
                 (secret, remember) = answer
             } catch {
                 phase = .disconnected
-                message = Message(title: "Couldn't connect to \(server.displayName)", text: error.localizedDescription)
+                message = Message(title: String(localized: "Couldn't connect to \(server.displayName)"), text: error.localizedDescription)
                 return
             }
         }
@@ -320,9 +320,9 @@ final class WindowModel {
         guard connection.editor.hasUnsavedChanges else { return forceDisconnect() }
         Task {
             let answer = await choose(
-                title: "Disconnect with Unsaved Changes?",
-                message: "Unsaved changes in: " + connection.editor.orderedTabs.filter { $0.document.isModified || $0.document.isDeleted }.map(\.document.name).joined(separator: ", "),
-                buttons: [.init("Discard and Disconnect", role: .destructive)]
+                title: String(localized: "Disconnect with Unsaved Changes?"),
+                message: String(localized: "Unsaved changes in: ") + connection.editor.orderedTabs.filter { $0.document.isModified || $0.document.isDeleted }.map(\.document.name).joined(separator: ", "),
+                buttons: [.init(String(localized: "Discard and Disconnect"), role: .destructive)]
             )
             if answer == 0 { forceDisconnect() }
         }
@@ -399,30 +399,30 @@ final class WindowModel {
 
     func confirmDelete(_ server: Server) {
         confirmation = Confirmation(
-            title: "Delete Server?",
-            message: "Remove “\(server.displayName)” from your servers? Its saved password is removed too.",
-            action: "Delete"
+            title: String(localized: "Delete Server?"),
+            message: String(localized: "Remove “\(server.displayName)” from your servers? Its saved password is removed too."),
+            action: String(localized: "Delete")
         ) { [self] in attempt { try app.delete(server) } }
     }
 
     func newGroup() {
-        nameRequest = NameRequest(title: "New Server Group", label: "Name", action: "Create") { [self] name in
+        nameRequest = NameRequest(title: String(localized: "New Server Group"), label: String(localized: "Name"), action: String(localized: "Create")) { [self] name in
             let folder = try app.addFolder(named: try Self.required(name))
             groupSelection = .folder(folder.id)
         }
     }
 
     func rename(_ folder: Folder) {
-        nameRequest = NameRequest(title: "Rename Group", label: "Name", initial: folder.name, action: "Rename") { [self] name in
+        nameRequest = NameRequest(title: String(localized: "Rename Group"), label: String(localized: "Name"), initial: folder.name, action: String(localized: "Rename")) { [self] name in
             try app.rename(folder, to: try Self.required(name))
         }
     }
 
     func confirmDelete(_ folder: Folder) {
         confirmation = Confirmation(
-            title: "Delete Group?",
-            message: "Delete “\(folder.name)”? Servers inside will become ungrouped.",
-            action: "Delete"
+            title: String(localized: "Delete Group?"),
+            message: String(localized: "Delete “\(folder.name)”? Servers inside will become ungrouped."),
+            action: String(localized: "Delete")
         ) { [self] in
             attempt { try app.delete(folder) }
             if groupSelection == .folder(folder.id) { groupSelection = .all }
@@ -431,8 +431,8 @@ final class WindowModel {
 
     func importServers() {
         let panel = NSOpenPanel()
-        panel.title = "Import Servers"
-        panel.message = "Choose an Edith export, a servers.json (the Linux app's is in ~/.config/edith) or a FileZilla sitemanager.xml."
+        panel.title = String(localized: "Import Servers")
+        panel.message = String(localized: "Choose an Edith export, a servers.json (the Linux app's is in ~/.config/edith) or a FileZilla sitemanager.xml.")
         panel.allowedContentTypes = [.json, .xml]
         panel.showsHiddenFiles = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
@@ -442,32 +442,32 @@ final class WindowModel {
             file = try ServerFile.read(url)
             result = try app.importServers(file)
         } catch {
-            message = Message(title: "Can't Import", text: error.localizedDescription)
+            message = Message(title: String(localized: "Can't Import"), text: error.localizedDescription)
             return
         }
         var parts = ["\(result.added) added"]
         if result.updated > 0 { parts.append("\(result.updated) updated") }
         if result.foldersAdded > 0 { parts.append("\(result.foldersAdded) groups added") }
-        let summary = "Servers: " + parts.joined(separator: ", ") + "."
+        let summary = String(localized: "Servers: ") + parts.joined(separator: ", ") + "."
 
         if !file.passwords.isEmpty {
             let count = file.passwords.count
             confirmation = Confirmation(
-                title: "Save \(count) Passwords to Keychain?",
+                title: String(localized: "Save \(count) Passwords to Keychain?"),
                 message: summary + " The FileZilla file also has passwords for \(count) servers. Save them to your Keychain?",
-                action: "Save Passwords", destructive: false
+                action: String(localized: "Save Passwords"), destructive: false
             ) { [self] in
                 do {
                     try app.savePasswords(file.passwords)
-                    announce("\(count) passwords saved to your Keychain")
+                    announce(String(localized: "\(count) passwords saved to your Keychain"))
                 } catch {
-                    message = Message(title: "Couldn't Save Passwords", text: error.localizedDescription)
+                    message = Message(title: String(localized: "Couldn't Save Passwords"), text: error.localizedDescription)
                 }
             }
             return
         }
         guard let blob = file.secrets else {
-            message = Message(title: "Servers Imported", text: summary)
+            message = Message(title: String(localized: "Servers Imported"), text: summary)
             return
         }
         Task { await restorePasswords(blob, for: Set(file.servers.map(\.id)), summary: summary) }
@@ -477,15 +477,15 @@ final class WindowModel {
     /// passwords encrypted under a passphrase if wanted.
     func exportServers() {
         let panel = NSSavePanel()
-        panel.title = "Export Servers"
+        panel.title = String(localized: "Export Servers")
         panel.nameFieldStringValue = ConfigStore.defaultExportName()
         panel.allowedContentTypes = [.json]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         Task {
             let withPasswords = await choose(
-                title: "Include Passwords?",
-                message: "Passwords are encrypted with a passphrase you choose, and needed again when importing. Without them, every server asks for its password on first connect.",
-                buttons: [.init("Include Passwords"), .init("Without Passwords")]
+                title: String(localized: "Include Passwords?"),
+                message: String(localized: "Passwords are encrypted with a passphrase you choose, and needed again when importing. Without them, every server asks for its password on first connect."),
+                buttons: [.init(String(localized: "Include Passwords")), .init(String(localized: "Without Passwords"))]
             )
             guard let withPasswords else { return }
             var blob: SecretsBlob?
@@ -499,9 +499,12 @@ final class WindowModel {
             do {
                 let data = try ConfigStore.exportData(servers: app.servers, folders: app.folders, secrets: blob)
                 try ConfigStore.writeExport(data, to: url, hasSecrets: blob != nil)
-                message = Message(title: "Servers Exported", text: "\(app.servers.count) servers\(blob == nil ? "" : " and their passwords") written to \(url.lastPathComponent).")
+                let text = blob == nil
+                    ? String(localized: "\(app.servers.count) servers written to \(url.lastPathComponent).")
+                    : String(localized: "\(app.servers.count) servers and their passwords written to \(url.lastPathComponent).")
+                message = Message(title: String(localized: "Servers Exported"), text: text)
             } catch {
-                message = Message(title: "Couldn't Export", text: error.localizedDescription)
+                message = Message(title: String(localized: "Couldn't Export"), text: error.localizedDescription)
             }
         }
     }
@@ -514,17 +517,17 @@ final class WindowModel {
                 passphraseRequest = PassphraseRequest(error: error) { continuation.resume(returning: $0) }
             }
             guard let passphrase else {
-                message = Message(title: "Servers Imported", text: summary + " Passwords weren't imported; you'll be asked for them when connecting.")
+                message = Message(title: String(localized: "Servers Imported"), text: summary + " Passwords weren't imported; you'll be asked for them when connecting.")
                 return
             }
             do {
                 let saved = try await app.restoreSecrets(blob, passphrase: passphrase, for: ids)
-                message = Message(title: "Servers Imported", text: summary + " \(saved) passwords saved to your Keychain.")
+                message = Message(title: String(localized: "Servers Imported"), text: summary + " \(saved) passwords saved to your Keychain.")
                 return
             } catch SecretsError.wrongPassphrase {
-                error = "Wrong passphrase. Try again."
+                error = String(localized: "Wrong passphrase. Try again.")
             } catch {
-                message = Message(title: "Servers Imported, Passwords Not", text: summary + " " + error.localizedDescription)
+                message = Message(title: String(localized: "Servers Imported, Passwords Not"), text: summary + " " + error.localizedDescription)
                 return
             }
         }
@@ -532,7 +535,7 @@ final class WindowModel {
 
     private static func required(_ name: String) throws -> String {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { throw RemoteError.failed("The name can't be empty.") }
+        guard !trimmed.isEmpty else { throw RemoteError.failed(String(localized: "The name can't be empty.")) }
         return trimmed
     }
 
@@ -552,13 +555,13 @@ final class WindowModel {
                 connection.reloadRecents()
             } catch WorkspaceError.binary(let name) {
                 confirmation = Confirmation(
-                    title: "Can't Edit “\(name)”",
-                    message: "It looks like a binary file, which the editor can't show. Download it instead?",
-                    action: "Download…", destructive: false
+                    title: String(localized: "Can't Edit “\(name)”"),
+                    message: String(localized: "It looks like a binary file, which the editor can't show. Download it instead?"),
+                    action: String(localized: "Download…"), destructive: false
                 ) { [self] in download([file]) }
             } catch is CancellationError {
             } catch {
-                message = Message(title: "Couldn't Open “\(file.name)”", text: error.localizedDescription)
+                message = Message(title: String(localized: "Couldn't Open “\(file.name)”"), text: error.localizedDescription)
             }
         }
     }
@@ -579,33 +582,33 @@ final class WindowModel {
 
     func newFile() {
         guard let browser = connection?.browser else { return }
-        nameRequest = NameRequest(title: "New File", label: "Name", action: "Create") { name in
+        nameRequest = NameRequest(title: String(localized: "New File"), label: String(localized: "Name"), action: String(localized: "Create")) { name in
             try await browser.createFile(named: name)
         }
     }
 
     func newFolder() {
         guard let browser = connection?.browser else { return }
-        nameRequest = NameRequest(title: "New Folder", label: "Name", action: "Create") { name in
+        nameRequest = NameRequest(title: String(localized: "New Folder"), label: String(localized: "Name"), action: String(localized: "Create")) { name in
             try await browser.createFolder(named: name)
         }
     }
 
     func rename(_ file: RemoteFile) {
         guard let browser = connection?.browser else { return }
-        nameRequest = NameRequest(title: "Rename", label: "Name", initial: file.name, action: "Rename") { name in
+        nameRequest = NameRequest(title: String(localized: "Rename"), label: String(localized: "Name"), initial: file.name, action: String(localized: "Rename")) { name in
             try await browser.rename(file, to: name)
         }
     }
 
     func confirmDelete(_ files: [RemoteFile]) {
         guard let browser = connection?.browser, !files.isEmpty else { return }
-        let what = files.count == 1 ? "“\(files[0].name)”" : "\(files.count) items"
+        let what = files.count == 1 ? String(localized: "“\(files[0].name)”") : String(localized: "\(files.count) items")
         let folders = files.contains { $0.isDirectory && !$0.isSymlink }
         confirmation = Confirmation(
-            title: "Delete \(what)?",
-            message: (folders ? "Folders are deleted with everything in them. " : "") + "This can't be undone.",
-            action: "Delete"
+            title: String(localized: "Delete \(what)?"),
+            message: (folders ? String(localized: "Folders are deleted with everything in them. ") : "") + "This can't be undone.",
+            action: String(localized: "Delete")
         ) { [self] in await attempt { try await browser.delete(files) } }
     }
 
@@ -621,14 +624,14 @@ final class WindowModel {
 
     func chooseDestination(moving files: [RemoteFile]) {
         guard let browser = connection?.browser else { return }
-        folderChoice = FolderChoice(title: "Move to", action: "Move", start: browser.path) { [self] dir in
+        folderChoice = FolderChoice(title: String(localized: "Move to"), action: String(localized: "Move"), start: browser.path) { [self] dir in
             await attempt { try await browser.move(files, to: dir) }
         }
     }
 
     func chooseDestination(copying files: [RemoteFile]) {
         guard let browser = connection?.browser else { return }
-        folderChoice = FolderChoice(title: "Copy to", action: "Copy", start: browser.path) { [self] dir in
+        folderChoice = FolderChoice(title: String(localized: "Copy to"), action: String(localized: "Copy"), start: browser.path) { [self] dir in
             await attempt { try await browser.copy(files, to: dir) }
         }
     }
@@ -685,8 +688,8 @@ final class WindowModel {
     func chooseUploads() {
         guard let connection else { return }
         let panel = NSOpenPanel()
-        panel.title = "Upload"
-        panel.prompt = "Upload"
+        panel.title = String(localized: "Upload")
+        panel.prompt = String(localized: "Upload")
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = true
         guard panel.runModal() == .OK else { return }
@@ -701,17 +704,17 @@ final class WindowModel {
             do {
                 existing = try await connection.session.conflicts(uploading: urls, to: directory)
             } catch {
-                message = Message(title: "Upload Failed", text: error.localizedDescription)
+                message = Message(title: String(localized: "Upload Failed"), text: error.localizedDescription)
                 return
             }
             if existing.isEmpty {
                 await runUpload(urls, to: directory, overwrite: false, on: connection)
             } else {
-                let what = existing.count == 1 ? "“\(existing[0])” already exists" : "\(existing.count) items already exist"
+                let what = existing.count == 1 ? String(localized: "“\(existing[0])” already exists") : String(localized: "\(existing.count) items already exist")
                 confirmation = Confirmation(
-                    title: "Replace Existing Items?",
-                    message: "\(what) in \(remoteName(directory)). Replacing overwrites them on the server.",
-                    action: "Replace"
+                    title: String(localized: "Replace Existing Items?"),
+                    message: String(localized: "\(what) in \(remoteName(directory)). Replacing overwrites them on the server."),
+                    action: String(localized: "Replace")
                 ) { [self] in await runUpload(urls, to: directory, overwrite: true, on: connection) }
             }
         }
@@ -722,7 +725,7 @@ final class WindowModel {
             try await connection.session.upload(urls, to: directory, overwrite: overwrite)
         } catch is CancellationError {
         } catch {
-            message = Message(title: "Upload Failed", text: error.localizedDescription)
+            message = Message(title: String(localized: "Upload Failed"), text: error.localizedDescription)
         }
         if connection.browser.path == directory { await connection.browser.refresh() }
     }
@@ -737,8 +740,8 @@ final class WindowModel {
             Task { await attempt { try await connection.session.download(files[0], to: url) } }
         } else {
             let panel = NSOpenPanel()
-            panel.title = "Download \(files.count) Items"
-            panel.prompt = "Download"
+            panel.title = String(localized: "Download \(files.count) Items")
+            panel.prompt = String(localized: "Download")
             panel.canChooseFiles = false
             panel.canChooseDirectories = true
             panel.canCreateDirectories = true
@@ -750,7 +753,7 @@ final class WindowModel {
     // MARK: Errors
 
     private func attempt(_ body: () throws -> Void) {
-        do { try body() } catch { message = Message(title: "Something Went Wrong", text: error.localizedDescription) }
+        do { try body() } catch { message = Message(title: String(localized: "Something Went Wrong"), text: error.localizedDescription) }
     }
 
     private func attempt(_ body: () async throws -> Void) async {
@@ -758,7 +761,7 @@ final class WindowModel {
             try await body()
         } catch is CancellationError {
         } catch {
-            message = Message(title: "Something Went Wrong", text: error.localizedDescription)
+            message = Message(title: String(localized: "Something Went Wrong"), text: error.localizedDescription)
         }
     }
 }

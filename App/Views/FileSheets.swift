@@ -25,7 +25,7 @@ struct FileInfoSheet: View {
 
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
                 row("Path", file.path)
-                if file.isSymlink { row("Kind", file.isDirectory ? "Link to a folder" : "Link") }
+                if file.isSymlink { row("Kind", file.isDirectory ? String(localized: "Link to a folder") : String(localized: "Link")) }
                 if !file.isDirectory { row("Size", "\(file.size.formatted()) bytes") }
                 row("Modified", file.modified?.formatted(date: .long, time: .standard) ?? "—")
                 row("Owner", file.owner.isEmpty ? "—" : file.owner)

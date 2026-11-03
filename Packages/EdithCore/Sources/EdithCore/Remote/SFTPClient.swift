@@ -100,7 +100,7 @@ public actor SFTPClient: RemoteFileSystem {
         approveHostKey: HostKeyApprover
     ) async throws {
         _ = Self.libraryReady
-        guard session == nil else { throw RemoteError.failed("Already connected.") }
+        guard session == nil else { throw RemoteError.failed(String(localized: "Already connected.", bundle: .module)) }
         do {
             try await establish(host: host, port: port, credentials: credentials, timeout: timeout, approveHostKey: approveHostKey)
         } catch {
@@ -115,7 +115,7 @@ public actor SFTPClient: RemoteFileSystem {
     private func establish(host: String, port: Int, credentials: SSHCredentials, timeout: Duration, approveHostKey: HostKeyApprover) async throws {
         sock = try openSocket(host: host, port: port, timeout: timeout)
         session = libssh2_session_init_ex(nil, nil, nil, Unmanaged.passUnretained(kbdint).toOpaque())
-        guard let session else { throw RemoteError.connectionFailed("Couldn't create an SSH session.") }
+        guard let session else { throw RemoteError.connectionFailed(String(localized: "Couldn't create an SSH session.", bundle: .module)) }
         libssh2_session_set_blocking(session, 1)
         libssh2_session_set_timeout(session, Int(timeout.components.seconds) * 1000)
 
@@ -134,7 +134,7 @@ public actor SFTPClient: RemoteFileSystem {
         try authenticate(credentials)
 
         sftp = libssh2_sftp_init(session)
-        guard sftp != nil else { throw RemoteError.connectionFailed("The server refused the SFTP subsystem: \(lastErrorMessage())") }
+        guard sftp != nil else { throw RemoteError.connectionFailed(String(localized: "The server refused the SFTP subsystem: \(lastErrorMessage())", bundle: .module)) }
         libssh2_session_set_timeout(session, 60_000)
     }
 
@@ -142,7 +142,7 @@ public actor SFTPClient: RemoteFileSystem {
         var length = 0
         var type: Int32 = 0
         guard let raw = libssh2_session_hostkey(session, &length, &type) else {
-            throw RemoteError.connectionFailed("The server sent no host key.")
+            throw RemoteError.connectionFailed(String(localized: "The server sent no host key.", bundle: .module))
         }
         let key = Data(bytes: raw, count: length)
         let keyType = sshStringPrefix(key) ?? "unknown"
@@ -199,7 +199,7 @@ public actor SFTPClient: RemoteFileSystem {
         defer { libssh2_agent_disconnect(agent); libssh2_agent_free(agent) }
         if let socket { libssh2_agent_set_identity_path(agent, socket) }
         guard libssh2_agent_connect(agent) == 0, libssh2_agent_list_identities(agent) == 0 else {
-            throw RemoteError.authenticationFailed("No password or key is set, and the SSH agent isn't available.")
+            throw RemoteError.authenticationFailed(String(localized: "No password or key is set, and the SSH agent isn't available.", bundle: .module))
         }
         var previous: UnsafeMutablePointer<libssh2_agent_publickey>?
         var identity: UnsafeMutablePointer<libssh2_agent_publickey>?
@@ -284,9 +284,9 @@ public actor SFTPClient: RemoteFileSystem {
             case LIBSSH2_FX_NO_SUCH_FILE, LIBSSH2_FX_NO_SUCH_PATH: return .noSuchFile(path)
             case LIBSSH2_FX_PERMISSION_DENIED, LIBSSH2_FX_WRITE_PROTECT: return .permissionDenied(path)
             case LIBSSH2_FX_FILE_ALREADY_EXISTS: return .alreadyExists(path)
-            case LIBSSH2_FX_DIR_NOT_EMPTY: return .failed("“\(remoteName(path))” isn't empty.")
-            case LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM, LIBSSH2_FX_QUOTA_EXCEEDED: return .failed("The server is out of space.")
-            default: return .failed("\(remoteName(path)): the server reported an error (SFTP status \(status)).")
+            case LIBSSH2_FX_DIR_NOT_EMPTY: return .failed(String(localized: "“\(remoteName(path))” isn't empty.", bundle: .module))
+            case LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM, LIBSSH2_FX_QUOTA_EXCEEDED: return .failed(String(localized: "The server is out of space.", bundle: .module))
+            default: return .failed(String(localized: "\(remoteName(path)): the server reported an error (SFTP status \(status)).", bundle: .module))
             }
         case LIBSSH2_ERROR_SOCKET_SEND, LIBSSH2_ERROR_SOCKET_RECV, LIBSSH2_ERROR_SOCKET_DISCONNECT, LIBSSH2_ERROR_SOCKET_TIMEOUT, LIBSSH2_ERROR_TIMEOUT:
             lost = true
@@ -397,7 +397,7 @@ public actor SFTPClient: RemoteFileSystem {
 
         try FileManager.default.createDirectory(at: localURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         guard FileManager.default.createFile(atPath: localURL.path, contents: nil) else {
-            throw RemoteError.failed("Can't write \(localURL.path).")
+            throw RemoteError.failed(String(localized: "Can't write \(localURL.path).", bundle: .module))
         }
         let out = try FileHandle(forWritingTo: localURL)
         var completed = false
@@ -548,11 +548,11 @@ public actor SFTPClient: RemoteFileSystem {
     public func exec(_ command: String, timeout: Duration) async throws -> ExecResult {
         guard let session, !lost else { throw RemoteError.notConnected }
         guard let channel = libssh2_channel_open_ex(session, "session", 7, 2 * 1024 * 1024, 32768, nil, 0) else {
-            throw RemoteError.failed("Couldn't open an exec channel: \(lastErrorMessage())")
+            throw RemoteError.failed(String(localized: "Couldn't open an exec channel: \(lastErrorMessage())", bundle: .module))
         }
         defer { libssh2_channel_free(channel) }
         guard libssh2_channel_process_startup(channel, "exec", 4, command, UInt32(command.utf8.count)) == 0 else {
-            throw RemoteError.failed("The server refused to run the command: \(lastErrorMessage())")
+            throw RemoteError.failed(String(localized: "The server refused to run the command: \(lastErrorMessage())", bundle: .module))
         }
 
         libssh2_session_set_blocking(session, 0)
@@ -575,7 +575,7 @@ public actor SFTPClient: RemoteFileSystem {
                 }
             }
             if libssh2_channel_eof(channel) != 0 && !progressed { break }
-            if ContinuousClock.now > deadline { throw RemoteError.failed("The command timed out.") }
+            if ContinuousClock.now > deadline { throw RemoteError.failed(String(localized: "The command timed out.", bundle: .module)) }
             if !progressed { waitForSocket(session, milliseconds: 100) }
         }
 
@@ -646,7 +646,7 @@ func openSocket(host: String, port: Int, timeout: Duration) throws -> Int32 {
     var result: UnsafeMutablePointer<addrinfo>?
     let rc = getaddrinfo(host, String(port), &hints, &result)
     guard rc == 0, let first = result else {
-        throw RemoteError.connectionFailed("Can't resolve \(host): \(String(cString: gai_strerror(rc)))")
+        throw RemoteError.connectionFailed(String(localized: "Can't resolve \(host): \(String(cString: gai_strerror(rc)))", bundle: .module))
     }
     defer { freeaddrinfo(result) }
 
@@ -684,5 +684,5 @@ func openSocket(host: String, port: Int, timeout: Duration) throws -> Int32 {
         }
         Darwin.close(fd)
     }
-    throw RemoteError.connectionFailed("Can't connect to \(host):\(port): \(String(cString: strerror(lastError)))")
+    throw RemoteError.connectionFailed(String(localized: "Can't connect to \(host):\(port): \(String(cString: strerror(lastError)))", bundle: .module))
 }

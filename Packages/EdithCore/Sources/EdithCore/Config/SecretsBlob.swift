@@ -13,9 +13,9 @@ public enum SecretsError: Error, LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .wrongPassphrase: "Wrong passphrase."
-        case .unsupported: "This file's saved passwords are in a format this version can't read."
-        case .damaged: "The saved passwords in this file are damaged."
+        case .wrongPassphrase: String(localized: "Wrong passphrase.", bundle: .module)
+        case .unsupported: String(localized: "This file's saved passwords are in a format this version can't read.", bundle: .module)
+        case .damaged: String(localized: "The saved passwords in this file are damaged.", bundle: .module)
         }
     }
 }

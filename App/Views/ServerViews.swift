@@ -41,7 +41,7 @@ struct ServerSidebar: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            StatusLine(text: "Disconnected", systemImage: "bolt.horizontal.circle", active: false)
+            StatusLine(text: String(localized: "Disconnected"), systemImage: "bolt.horizontal.circle", active: false)
         }
     }
 
@@ -137,7 +137,7 @@ struct ServerListView: View {
                     .disabled(server.folderID == folder.id)
             }
         }
-        Button(app.pinnedServerIDs.contains(server.id) ? "Unpin" : "Pin") { try? app.togglePin(server) }
+        Button(app.pinnedServerIDs.contains(server.id) ? String(localized: "Unpin") : String(localized: "Pin")) { try? app.togglePin(server) }
         Divider()
         Button("Delete…", role: .destructive) { window.confirmDelete(server) }
     }
@@ -160,14 +160,14 @@ struct ServerListView: View {
         switch window.groupSelection {
         case .ungrouped:
             let servers = matching.filter { $0.folderID.isEmpty }.sorted(by: byName)
-            return servers.isEmpty ? [] : [Section(id: "ungrouped", title: "Without Group", servers: servers)]
+            return servers.isEmpty ? [] : [Section(id: "ungrouped", title: String(localized: "Without Group"), servers: servers)]
         case .folder(let id):
             let servers = matching.filter { $0.folderID == id }.sorted(by: byName)
             return servers.isEmpty ? [] : [Section(id: id, title: groupTitle, servers: servers)]
         case .all:
             var result: [Section] = []
             let pinned = matching.filter { app.pinnedServerIDs.contains($0.id) }.sorted(by: byName)
-            if !pinned.isEmpty { result.append(Section(id: "pinned", title: "Pinned", servers: pinned)) }
+            if !pinned.isEmpty { result.append(Section(id: "pinned", title: String(localized: "Pinned"), servers: pinned)) }
             let rest = matching.filter { !app.pinnedServerIDs.contains($0.id) }
             for folder in app.folders {
                 let servers = rest.filter { $0.folderID == folder.id }.sorted(by: byName)
@@ -176,7 +176,7 @@ struct ServerListView: View {
             // Servers in no group, or in one that no longer exists.
             let known = Set(app.folders.map(\.id))
             let loose = rest.filter { $0.folderID.isEmpty || !known.contains($0.folderID) }.sorted(by: byName)
-            if !loose.isEmpty { result.append(Section(id: "ungrouped", title: "Without Group", servers: loose)) }
+            if !loose.isEmpty { result.append(Section(id: "ungrouped", title: String(localized: "Without Group"), servers: loose)) }
             return result
         }
     }

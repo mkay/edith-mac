@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "EdithCore",
+    defaultLocalization: "en",
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "EdithCore", targets: ["EdithCore"]),
@@ -13,7 +14,9 @@ let package = Package(
         .binaryTarget(name: "CLibssh2", path: "Vendor/CLibssh2.xcframework"),
         .target(
             name: "EdithCore",
-            dependencies: ["CLibssh2"]
+            dependencies: ["CLibssh2"],
+            // Error messages the app shows, in English and German.
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .testTarget(
             name: "EdithCoreTests",

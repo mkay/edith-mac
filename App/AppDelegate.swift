@@ -12,10 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let unsaved = app?.unsavedSummary, !unsaved.isEmpty else { return .terminateNow }
         let alert = NSAlert()
-        alert.messageText = "Quit with Unsaved Changes?"
-        alert.informativeText = "Unsaved changes in:\n" + unsaved.joined(separator: "\n")
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Discard and Quit").hasDestructiveAction = true
+        alert.messageText = String(localized: "Quit with Unsaved Changes?")
+        alert.informativeText = String(localized: "Unsaved changes in:\n") + unsaved.joined(separator: "\n")
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        alert.addButton(withTitle: String(localized: "Discard and Quit")).hasDestructiveAction = true
         return alert.runModal() == .alertSecondButtonReturn ? .terminateNow : .terminateCancel
     }
 

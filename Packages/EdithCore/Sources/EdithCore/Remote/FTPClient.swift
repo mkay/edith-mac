@@ -119,7 +119,7 @@ public actor FTPClient: RemoteFileSystem {
                 if auth.code == 234 {
                     try await startTLS(on: stream, approve: approveCertificate)
                 } else if security == .explicitRequired {
-                    throw RemoteError.connectionFailed("The server doesn't support FTPS (AUTH TLS): \(auth.text)")
+                    throw RemoteError.connectionFailed(String(localized: "The server doesn't support FTPS (AUTH TLS): \(auth.text)", bundle: .module))
                 }
             }
 
@@ -130,7 +130,7 @@ public actor FTPClient: RemoteFileSystem {
             if tls != nil {
                 _ = try command("PBSZ 0")
                 let prot = try command("PROT P")
-                guard prot.isSuccess else { throw RemoteError.connectionFailed("The server refused encrypted transfers: \(prot.text)") }
+                guard prot.isSuccess else { throw RemoteError.connectionFailed(String(localized: "The server refused encrypted transfers: \(prot.text)", bundle: .module)) }
             }
             let features = try command("FEAT")
             let feats = features.text.uppercased()
@@ -154,7 +154,7 @@ public actor FTPClient: RemoteFileSystem {
     /// Accepts a chain macOS trusts for this host, or one the user accepted
     /// before; otherwise asks.
     private func verify(_ chain: [SecCertificate], approve: CertificateApprover) async throws {
-        guard let leaf = chain.first else { throw RemoteError.connectionFailed("The server sent no certificate.") }
+        guard let leaf = chain.first else { throw RemoteError.connectionFailed(String(localized: "The server sent no certificate.", bundle: .module)) }
         var trust: SecTrust?
         SecTrustCreateWithCertificates(chain as CFArray, SecPolicyCreateSSL(true, host as CFString), &trust)
         var error: CFError?
@@ -235,7 +235,7 @@ public actor FTPClient: RemoteFileSystem {
         do {
             let first = try control.readLine()
             guard first.count >= 3, let code = Int(first.prefix(3)) else {
-                throw RemoteError.failed("Unexpected reply from the server: \(first)")
+                throw RemoteError.failed(String(localized: "Unexpected reply from the server: \(first)", bundle: .module))
             }
             var lines = [first]
             if first.dropFirst(3).first == "-" {
@@ -287,7 +287,7 @@ public actor FTPClient: RemoteFileSystem {
             } catch {
                 data.close()
                 _ = try? reply()
-                throw RemoteError.failed("The encrypted data connection failed: \(error.localizedDescription)")
+                throw RemoteError.failed(String(localized: "The encrypted data connection failed: \(error.localizedDescription)", bundle: .module))
             }
         }
         return data
@@ -319,7 +319,7 @@ public actor FTPClient: RemoteFileSystem {
         let pasv = try command("PASV")
         guard pasv.code == 227, let m = pasv.text.firstMatch(of: /(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/),
               let hi = Int(m.5), let lo = Int(m.6)
-        else { throw RemoteError.failed("The server refused passive mode: \(pasv.text)") }
+        else { throw RemoteError.failed(String(localized: "The server refused passive mode: \(pasv.text)", bundle: .module)) }
         return (host, hi * 256 + lo)
     }
 
@@ -408,7 +408,7 @@ public actor FTPClient: RemoteFileSystem {
                 .map { $0.drop { $0.isNumber }.drop { $0 == "-" || $0 == " " } }
                 .first { $0.contains("=") && $0.contains(";") }
             guard let factsLine, var file = FTPListing.parseMLSD(String(factsLine), in: remoteParent(path)).first
-            else { throw RemoteError.failed("Unexpected MLST reply: \(r.text)") }
+            else { throw RemoteError.failed(String(localized: "Unexpected MLST reply: \(r.text)", bundle: .module)) }
             file.name = remoteName(path)
             file.path = path
             if file.isSymlink { file.isDirectory = try isDirectory(path) }
@@ -442,7 +442,7 @@ public actor FTPClient: RemoteFileSystem {
 
         try FileManager.default.createDirectory(at: localURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         guard FileManager.default.createFile(atPath: localURL.path, contents: nil) else {
-            throw RemoteError.failed("Can't write \(localURL.path).")
+            throw RemoteError.failed(String(localized: "Can't write \(localURL.path).", bundle: .module))
         }
         let out = try FileHandle(forWritingTo: localURL)
         var completed = false
@@ -515,7 +515,7 @@ public actor FTPClient: RemoteFileSystem {
 
     public func chmod(_ path: String, permissions: UInt32) async throws {
         let r = try command("SITE CHMOD \(String(permissions & 0o7777, radix: 8)) \(path)")
-        guard r.isSuccess else { throw RemoteError.unsupported("The server didn't change the permissions: \(r.text)") }
+        guard r.isSuccess else { throw RemoteError.unsupported(String(localized: "The server didn't change the permissions: \(r.text)", bundle: .module)) }
     }
 
     public func remove(_ path: String) async throws {
@@ -545,7 +545,7 @@ public actor FTPClient: RemoteFileSystem {
     }
 
     public func exec(_ command: String) async throws -> ExecResult {
-        throw RemoteError.unsupported("FTP servers can't run commands.")
+        throw RemoteError.unsupported(String(localized: "FTP servers can't run commands.", bundle: .module))
     }
 }
 
@@ -654,7 +654,7 @@ final class TLSContext: @unchecked Sendable {
     let ctx: OpaquePointer
 
     init() throws {
-        guard let ctx = SSL_CTX_new(TLS_client_method()) else { throw RemoteError.failed("Couldn't set up TLS.") }
+        guard let ctx = SSL_CTX_new(TLS_client_method()) else { throw RemoteError.failed(String(localized: "Couldn't set up TLS.", bundle: .module)) }
         // Verification happens with the macOS trust store, after the handshake.
         SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, nil)
         SSL_CTX_ctrl(ctx, SSL_CTRL_SET_SESS_CACHE_MODE, Int(SSL_SESS_CACHE_CLIENT), nil)
@@ -690,7 +690,7 @@ final class FTPStream: @unchecked Sendable {
     }
 
     func startTLS(_ context: TLSContext, host: String, resuming session: OpaquePointer?) throws {
-        guard let ssl = SSL_new(context.ctx) else { throw RemoteError.failed("Couldn't start TLS.") }
+        guard let ssl = SSL_new(context.ctx) else { throw RemoteError.failed(String(localized: "Couldn't start TLS.", bundle: .module)) }
         SSL_set_fd(ssl, fd)
         // SNI, unless the host is an IP address (where it's not allowed).
         if inet_addr(host) == INADDR_NONE && !host.contains(":") {
@@ -701,7 +701,7 @@ final class FTPStream: @unchecked Sendable {
         guard SSL_connect(ssl) == 1 else {
             let message = Self.lastError()
             SSL_free(ssl)
-            throw RemoteError.connectionFailed("TLS handshake failed: \(message)")
+            throw RemoteError.connectionFailed(String(localized: "TLS handshake failed: \(message)", bundle: .module))
         }
         self.ssl = ssl
     }
@@ -741,7 +741,7 @@ final class FTPStream: @unchecked Sendable {
             if error == SSL_ERROR_ZERO_RETURN { return 0 }
             // Many servers close data connections without a TLS close_notify.
             if error == SSL_ERROR_SYSCALL && errno == 0 { return 0 }
-            throw RemoteError.connectionFailed("TLS read failed: \(Self.lastError())")
+            throw RemoteError.connectionFailed(String(localized: "TLS read failed: \(Self.lastError())", bundle: .module))
         }
         if n == 0 { return 0 }
         throw RemoteError.connectionFailed(errno == EAGAIN ? "The server stopped responding." : String(cString: strerror(errno)))
@@ -757,7 +757,7 @@ final class FTPStream: @unchecked Sendable {
                 } else {
                     Darwin.write(fd, raw.baseAddress! + offset, rest)
                 }
-                guard n > 0 else { throw RemoteError.connectionFailed("Writing to the server failed.") }
+                guard n > 0 else { throw RemoteError.connectionFailed(String(localized: "Writing to the server failed.", bundle: .module)) }
                 offset += n
             }
         }
@@ -777,7 +777,7 @@ final class FTPStream: @unchecked Sendable {
                 return String(decoding: line, as: UTF8.self)
             }
             let n = try read(&buffer)
-            guard n > 0 else { throw RemoteError.connectionFailed("The server closed the connection.") }
+            guard n > 0 else { throw RemoteError.connectionFailed(String(localized: "The server closed the connection.", bundle: .module)) }
             pending.append(contentsOf: buffer[..<n])
         }
     }

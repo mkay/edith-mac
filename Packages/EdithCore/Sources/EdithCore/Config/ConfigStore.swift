@@ -14,7 +14,7 @@ public enum ConfigError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unreadable(let url, let error):
-            "The settings file \(url.path) can't be read: \(error.localizedDescription)"
+            String(localized: "The settings file \(url.path) can't be read: \(error.localizedDescription)", bundle: .module)
         }
     }
 }

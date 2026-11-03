@@ -165,7 +165,7 @@ final class EditorController {
             return true
         } catch {
             tab.document.isModified = true
-            window?.message = Message(title: "Couldn't Save “\(tab.document.name)”", text: error.localizedDescription)
+            window?.message = Message(title: String(localized: "Couldn't Save “\(tab.document.name)”"), text: error.localizedDescription)
             return false
         }
     }
@@ -184,9 +184,9 @@ final class EditorController {
         let doc = tab.document
         if doc.isDeleted {
             let choice = await window.choose(
-                title: "File Was Deleted",
-                message: "“\(doc.name)” no longer exists on the server. Closing the tab loses its content.",
-                buttons: [.init("Restore"), .init("Close", role: .destructive)]
+                title: String(localized: "File Was Deleted"),
+                message: String(localized: "“\(doc.name)” no longer exists on the server. Closing the tab loses its content."),
+                buttons: [.init(String(localized: "Restore")), .init(String(localized: "Close"), role: .destructive)]
             )
             switch choice {
             case 0:
@@ -197,9 +197,9 @@ final class EditorController {
             }
         } else if doc.isModified {
             let choice = await window.choose(
-                title: "Save Changes?",
-                message: "“\(doc.name)” has unsaved changes.",
-                buttons: [.init("Save"), .init("Don't Save", role: .destructive)]
+                title: String(localized: "Save Changes?"),
+                message: String(localized: "“\(doc.name)” has unsaved changes."),
+                buttons: [.init(String(localized: "Save")), .init(String(localized: "Don't Save"), role: .destructive)]
             )
             switch choice {
             case 0: guard await save(tab) else { return false }
@@ -238,7 +238,7 @@ final class EditorController {
                 if doc.kind == .text { try startEditor(for: tab, text: workspace.text(of: doc)) }
             }
         } catch {
-            window?.message = Message(title: "Couldn't Reopen", text: error.localizedDescription)
+            window?.message = Message(title: String(localized: "Couldn't Reopen"), text: error.localizedDescription)
         }
     }
 
@@ -254,9 +254,9 @@ final class EditorController {
 
     private func askToReload(_ doc: Document) async -> Bool {
         await window?.choose(
-            title: "File Changed on Server",
-            message: "“\(doc.name)” has been modified on the server. Reload it? Your unsaved changes will be lost.",
-            buttons: [.init("Reload", role: .destructive), .init("Keep Mine")]
+            title: String(localized: "File Changed on Server"),
+            message: String(localized: "“\(doc.name)” has been modified on the server. Reload it? Your unsaved changes will be lost."),
+            buttons: [.init(String(localized: "Reload"), role: .destructive), .init(String(localized: "Keep Mine"))]
         ) == 0
     }
 }

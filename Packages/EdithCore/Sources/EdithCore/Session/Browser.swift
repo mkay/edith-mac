@@ -216,9 +216,9 @@ public final class Browser {
     /// A single path component, or an error saying why not.
     public nonisolated static func validName(_ name: String) throws -> String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { throw RemoteError.failed("The name can't be empty.") }
-        if trimmed == "." || trimmed == ".." { throw RemoteError.failed("“\(trimmed)” isn't a valid name.") }
-        if trimmed.contains("/") { throw RemoteError.failed("Names can't contain “/”.") }
+        if trimmed.isEmpty { throw RemoteError.failed(String(localized: "The name can't be empty.", bundle: .module)) }
+        if trimmed == "." || trimmed == ".." { throw RemoteError.failed(String(localized: "“\(trimmed)” isn't a valid name.", bundle: .module)) }
+        if trimmed.contains("/") { throw RemoteError.failed(String(localized: "Names can't contain “/”.", bundle: .module)) }
         return trimmed
     }
 }

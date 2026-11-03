@@ -110,7 +110,7 @@ private struct EditorSettingsTab: View {
 
     private func applyOverrides() {
         guard let object = try? JSONSerialization.jsonObject(with: Data(overrides.utf8)), object is [String: Any] else {
-            overridesError = "That isn't a JSON object."
+            overridesError = String(localized: "That isn't a JSON object.")
             return
         }
         overridesError = nil

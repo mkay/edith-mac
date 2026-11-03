@@ -26,9 +26,9 @@ public enum WorkspaceError: Error, LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .binary(let name): "“\(name)” looks like a binary file, which the editor can't show."
+        case .binary(let name): String(localized: "“\(name)” looks like a binary file, which the editor can't show.", bundle: .module)
         case .cantEncode(let name, let encoding):
-            "“\(name)” is a \(encoding.displayName) file, and some of the new text can't be written in \(encoding.displayName)."
+            String(localized: "“\(name)” is a \(encoding.displayName) file, and some of the new text can't be written in \(encoding.displayName).", bundle: .module)
         }
     }
 }

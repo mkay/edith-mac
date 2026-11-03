@@ -24,16 +24,16 @@ public enum RemoteError: Error, LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .notConnected: "Not connected."
-        case .connectionFailed(let m): "Connection failed: \(m)"
-        case .authenticationFailed(let m): "Authentication failed: \(m)"
-        case .hostKeyRejected: "The server's host key was not accepted."
+        case .notConnected: String(localized: "Not connected.", bundle: .module)
+        case .connectionFailed(let m): String(localized: "Connection failed: \(m)", bundle: .module)
+        case .authenticationFailed(let m): String(localized: "Authentication failed: \(m)", bundle: .module)
+        case .hostKeyRejected: String(localized: "The server's host key was not accepted.", bundle: .module)
         case .hostKeyChanged(let host, let type, let fp):
-            "The host key for \(host) has changed. The server now presents \(type) \(fp), which doesn't match the key on record. This can mean someone is intercepting the connection."
-        case .hostKeyRevoked(let host): "The host key for \(host) is marked as revoked."
-        case .noSuchFile(let p): "“\(remoteName(p))” doesn't exist."
-        case .permissionDenied(let p): "Permission denied: \(p)"
-        case .alreadyExists(let p): "“\(remoteName(p))” already exists."
+            String(localized: "The host key for \(host) has changed. The server now presents \(type) \(fp), which doesn't match the key on record. This can mean someone is intercepting the connection.", bundle: .module)
+        case .hostKeyRevoked(let host): String(localized: "The host key for \(host) is marked as revoked.", bundle: .module)
+        case .noSuchFile(let p): String(localized: "“\(remoteName(p))” doesn't exist.", bundle: .module)
+        case .permissionDenied(let p): String(localized: "Permission denied: \(p)", bundle: .module)
+        case .alreadyExists(let p): String(localized: "“\(remoteName(p))” already exists.", bundle: .module)
         case .unsupported(let m): m
         case .failed(let m): m
         }

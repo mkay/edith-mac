@@ -57,14 +57,14 @@ extension WindowModel {
                 }
             } catch is CancellationError {
             } catch {
-                message = Message(title: "Couldn't Open “\(file.name)”", text: error.localizedDescription)
+                message = Message(title: String(localized: "Couldn't Open “\(file.name)”"), text: error.localizedDescription)
             }
         }
     }
 
     func chooseApp(for file: RemoteFile) {
         let panel = NSOpenPanel()
-        panel.title = "Open “\(file.name)” With"
+        panel.title = String(localized: "Open “\(file.name)” With")
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         panel.allowedContentTypes = [.application]
         guard panel.runModal() == .OK, let app = panel.url else { return }
@@ -83,14 +83,14 @@ extension WindowModel {
         guard let connection else { return }
         do {
             try await connection.session.upload([local], to: remoteParent(remotePath), overwrite: true)
-            announce("Uploaded \(remoteName(remotePath))")
+            announce(String(localized: "Uploaded \(remoteName(remotePath))"))
             if connection.browser.path == remoteParent(remotePath) { await connection.browser.refresh() }
             // An editor tab on the same file follows, unless it has its own edits.
             if let doc = connection.editor.workspace.document(at: remotePath), !doc.isModified {
                 await connection.editor.workspace.redownload(doc)
             }
         } catch {
-            message = Message(title: "Couldn't Upload “\(remoteName(remotePath))”", text: error.localizedDescription)
+            message = Message(title: String(localized: "Couldn't Upload “\(remoteName(remotePath))”"), text: error.localizedDescription)
         }
     }
 
@@ -107,8 +107,8 @@ extension WindowModel {
 
     func chooseToolsFolder() {
         let panel = NSOpenPanel()
-        panel.title = "Choose Tools Folder"
-        panel.message = "Files in this folder can be uploaded anywhere with Upload Tool."
+        panel.title = String(localized: "Choose Tools Folder")
+        panel.message = String(localized: "Files in this folder can be uploaded anywhere with Upload Tool.")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.canCreateDirectories = true
@@ -135,20 +135,20 @@ extension WindowModel {
                 try Data(minified.utf8).write(to: output)
                 let saved = code.utf8.isEmpty ? 0 : 100 - minified.utf8.count * 100 / code.utf8.count
                 upload([output], to: directory)
-                announce("Minified \(file.name) (\(saved)% smaller)")
+                announce(String(localized: "Minified \(file.name) (\(saved)% smaller)"))
             } catch {
-                message = Message(title: "Couldn't Minify “\(file.name)”", text: error.localizedDescription)
+                message = Message(title: String(localized: "Couldn't Minify “\(file.name)”"), text: error.localizedDescription)
             }
         }
     }
 
     func createArchive(of file: RemoteFile) {
         guard let connection else { return }
-        nameRequest = NameRequest(title: "Create Archive", label: "Name (.zip, .tar.gz, .tar.bz2, .tar.xz or .tar)",
-                                  initial: "\(file.name).zip", action: "Create") { [self] name in
+        nameRequest = NameRequest(title: String(localized: "Create Archive"), label: String(localized: "Name (.zip, .tar.gz, .tar.bz2, .tar.xz or .tar)"),
+                                  initial: "\(file.name).zip", action: String(localized: "Create")) { [self] name in
             let path = try await connection.session.createArchive(of: file, named: name)
             await connection.browser.refresh()
-            announce("Created \(remoteName(path))")
+            announce(String(localized: "Created \(remoteName(path))"))
         }
     }
 }

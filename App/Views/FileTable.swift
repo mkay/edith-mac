@@ -272,39 +272,39 @@ struct FileTable: NSViewRepresentable {
             let files = targetFiles
             let single = files.count == 1 ? files.first : nil
 
-            menu.addItem(ClosureMenuItem("New File…") { window.newFile() })
-            menu.addItem(ClosureMenuItem("New Folder…") { window.newFolder() })
+            menu.addItem(ClosureMenuItem(String(localized: "New File…")) { window.newFile() })
+            menu.addItem(ClosureMenuItem(String(localized: "New Folder…")) { window.newFolder() })
             if !files.isEmpty {
                 menu.addItem(.separator())
                 let actions = NSMenu()
-                actions.addItem(ClosureMenuItem("Move to…") { window.chooseDestination(moving: files) })
-                actions.addItem(ClosureMenuItem("Copy to…") { window.chooseDestination(copying: files) })
-                actions.addItem(ClosureMenuItem("Duplicate") { window.duplicate(files) })
+                actions.addItem(ClosureMenuItem(String(localized: "Move to…")) { window.chooseDestination(moving: files) })
+                actions.addItem(ClosureMenuItem(String(localized: "Copy to…")) { window.chooseDestination(copying: files) })
+                actions.addItem(ClosureMenuItem(String(localized: "Duplicate")) { window.duplicate(files) })
                 if let single {
                     if Minifier.Kind(fileName: single.name) != nil {
-                        actions.addItem(ClosureMenuItem("Minify") { window.minify(single) })
+                        actions.addItem(ClosureMenuItem(String(localized: "Minify")) { window.minify(single) })
                     }
-                    actions.addItem(ClosureMenuItem("Create Archive…") { window.createArchive(of: single) })
+                    actions.addItem(ClosureMenuItem(String(localized: "Create Archive…")) { window.createArchive(of: single) })
                 }
                 menu.addItem(submenu("Actions", actions))
-                if let single { menu.addItem(ClosureMenuItem("Rename…") { window.rename(single) }) }
-                menu.addItem(ClosureMenuItem("Delete…") { window.confirmDelete(files) })
+                if let single { menu.addItem(ClosureMenuItem(String(localized: "Rename…")) { window.rename(single) }) }
+                menu.addItem(ClosureMenuItem(String(localized: "Delete…")) { window.confirmDelete(files) })
                 menu.addItem(.separator())
-                menu.addItem(ClosureMenuItem(files.count == 1 ? "Download…" : "Download \(files.count) Items…") { window.download(files) })
-                menu.addItem(ClosureMenuItem(files.count == 1 ? "Copy Path" : "Copy Paths") { window.copyPaths(files) })
+                menu.addItem(ClosureMenuItem(files.count == 1 ? String(localized: "Download…") : String(localized: "Download \(files.count) Items…")) { window.download(files) })
+                menu.addItem(ClosureMenuItem(files.count == 1 ? String(localized: "Copy Path") : String(localized: "Copy Paths")) { window.copyPaths(files) })
             }
             let tools = NSMenu()
             for tool in window.toolFiles {
                 tools.addItem(ClosureMenuItem(tool.lastPathComponent) { window.upload([tool], to: self.shownPath) })
             }
             if !tools.items.isEmpty { tools.addItem(.separator()) }
-            tools.addItem(ClosureMenuItem("Choose Tools Folder…") { window.chooseToolsFolder() })
+            tools.addItem(ClosureMenuItem(String(localized: "Choose Tools Folder…")) { window.chooseToolsFolder() })
             menu.addItem(submenu("Upload Tool", tools))
 
             if let single {
                 menu.addItem(.separator())
                 if single.isDirectory {
-                    menu.addItem(ClosureMenuItem("Open Locally") { window.openLocally(single) })
+                    menu.addItem(ClosureMenuItem(String(localized: "Open Locally")) { window.openLocally(single) })
                 } else {
                     let defaultApp = window.defaultApp(for: single)
                     menu.addItem(ClosureMenuItem(defaultApp.map { "Open with \(window.appName($0))" } ?? "Open Locally") {
@@ -318,18 +318,18 @@ struct FileTable: NSViewRepresentable {
                         others.addItem(item)
                     }
                     if !others.items.isEmpty { others.addItem(.separator()) }
-                    others.addItem(ClosureMenuItem("Other…") { window.chooseApp(for: single) })
+                    others.addItem(ClosureMenuItem(String(localized: "Other…")) { window.chooseApp(for: single) })
                     menu.addItem(submenu("Open With", others))
                 }
             }
 
             menu.addItem(.separator())
             if let single {
-                menu.addItem(ClosureMenuItem(connection.isPinned(single.path) ? "Unpin" : "Pin") { window.togglePin(single) })
-                menu.addItem(ClosureMenuItem("Information…") { window.infoFile = single })
+                menu.addItem(ClosureMenuItem(connection.isPinned(single.path) ? String(localized: "Unpin") : String(localized: "Pin")) { window.togglePin(single) })
+                menu.addItem(ClosureMenuItem(String(localized: "Information…")) { window.infoFile = single })
             }
-            menu.addItem(ClosureMenuItem("Upload…") { window.chooseUploads() })
-            menu.addItem(ClosureMenuItem("Refresh") { window.refresh() })
+            menu.addItem(ClosureMenuItem(String(localized: "Upload…")) { window.chooseUploads() })
+            menu.addItem(ClosureMenuItem(String(localized: "Refresh")) { window.refresh() })
         }
 
         private func submenu(_ title: String, _ menu: NSMenu) -> NSMenuItem {

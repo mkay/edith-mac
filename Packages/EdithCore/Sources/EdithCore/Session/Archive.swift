@@ -99,7 +99,7 @@ extension Session {
         }
         guard status == 0 else {
             let message = String(decoding: errors.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-            throw RemoteError.failed("\(tool) failed: \(message.trimmingCharacters(in: .whitespacesAndNewlines))")
+            throw RemoteError.failed(String(localized: "\(tool) failed: \(message.trimmingCharacters(in: .whitespacesAndNewlines))", bundle: .module))
         }
     }
 }

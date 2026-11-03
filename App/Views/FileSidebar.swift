@@ -22,11 +22,11 @@ struct FileSidebar: View {
                 Button("Refresh", systemImage: "arrow.clockwise") { window.refresh() }
                     .help("Refresh (⌘R)")
                 Toggle("Show Hidden Files", systemImage: browser.showHidden ? "eye" : "eye.slash", isOn: $browser.showHidden)
-                    .help(browser.showHidden ? "Hide hidden files" : "Show hidden files")
+                    .help(browser.showHidden ? String(localized: "Hide hidden files") : String(localized: "Show hidden files"))
                 Spacer()
                 if browser.isLoading { ProgressView().controlSize(.small) }
                 Toggle("Details", systemImage: window.showFileDetails ? "tablecells.fill" : "tablecells", isOn: $window.showFileDetails)
-                    .help(window.showFileDetails ? "Show names only" : "Show size, date, permissions and owner")
+                    .help(window.showFileDetails ? String(localized: "Show names only") : String(localized: "Show size, date, permissions and owner"))
             }
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
@@ -79,7 +79,7 @@ struct FileSidebar: View {
             ContentUnavailableView("Can't Open Folder", systemImage: "exclamationmark.triangle", description: Text(error))
                 .allowsHitTesting(false)
         } else if browser.visible.isEmpty && !browser.isLoading {
-            Text(browser.filter.isEmpty ? "Empty folder" : "No matches")
+            Text(browser.filter.isEmpty ? String(localized: "Empty folder") : String(localized: "No matches"))
                 .foregroundStyle(.secondary)
                 .allowsHitTesting(false)
         }

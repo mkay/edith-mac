@@ -32,10 +32,10 @@ public enum ServerImportError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .notJSON(let detail): "This file is not valid JSON: \(detail)"
-        case .noServerList: "This file does not contain an Edith server list."
-        case .malformed: "This file's server list is malformed."
-        case .unrecognized: "Unrecognised file format: expected an Edith export, a servers.json or a FileZilla sitemanager.xml."
+        case .notJSON(let detail): String(localized: "This file is not valid JSON: \(detail)", bundle: .module)
+        case .noServerList: String(localized: "This file does not contain an Edith server list.", bundle: .module)
+        case .malformed: String(localized: "This file's server list is malformed.", bundle: .module)
+        case .unrecognized: String(localized: "Unrecognised file format: expected an Edith export, a servers.json or a FileZilla sitemanager.xml.", bundle: .module)
         }
     }
 }

@@ -66,7 +66,7 @@ struct ServerEditor: View {
                         .onChange(of: server.ftpEncryption) { _, new in adjustPort(for: new) }
                     }
                     if server.secretKind != .none {
-                        SecureField(server.secretKind == .passphrase ? "Passphrase" : "Password", text: $secret,
+                        SecureField(server.secretKind == .passphrase ? String(localized: "Passphrase") : String(localized: "Password"), text: $secret,
                                     prompt: Text("Ask when connecting"))
                     }
                 } header: {
@@ -92,14 +92,14 @@ struct ServerEditor: View {
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button(request.isNew ? "Add" : "Save", action: save)
+                Button(request.isNew ? String(localized: "Add") : String(localized: "Save"), action: save)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!isValid)
             }
             .padding()
         }
         .frame(width: 480)
-        .navigationTitle(request.isNew ? "Add Server" : "Edit Server")
+        .navigationTitle(request.isNew ? String(localized: "Add Server") : String(localized: "Edit Server"))
         .onAppear(perform: load)
         .alert("Can't Save", isPresented: .constant(error != nil)) {
             Button("OK") { error = nil }
@@ -150,7 +150,7 @@ struct ServerEditor: View {
 
     private func chooseKey() {
         let panel = NSOpenPanel()
-        panel.title = "Choose SSH Key"
+        panel.title = String(localized: "Choose SSH Key")
         panel.showsHiddenFiles = true
         panel.directoryURL = URL.homeDirectory.appending(path: ".ssh")
         if panel.runModal() == .OK, let url = panel.url {
@@ -190,19 +190,19 @@ struct ServerEditor: View {
     /// A sheet can't present another sheet, so testing asks with a plain alert.
     private static func confirmCertificate(_ challenge: CertificateChallenge) -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Trust the certificate of \(challenge.host)?"
+        alert.messageText = String(localized: "Trust the certificate of \(challenge.host)?")
         alert.informativeText = CertificatePrompt.explanation(challenge) + "\n\n\(challenge.subject)\n\(challenge.fingerprint)"
-        alert.addButton(withTitle: "Trust")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "Trust"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         return alert.runModal() == .alertFirstButtonReturn
     }
 
     private static func confirmHostKey(_ challenge: HostKeyChallenge) -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Trust \(challenge.host)?"
+        alert.messageText = String(localized: "Trust \(challenge.host)?")
         alert.informativeText = HostKeyPrompt.explanation(challenge) + "\n\n\(challenge.keyType)\n\(challenge.fingerprint)"
-        alert.addButton(withTitle: "Trust")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "Trust"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         return alert.runModal() == .alertFirstButtonReturn
     }
 
@@ -238,7 +238,7 @@ struct SecretPrompt: View {
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            SecureField(request.kind == .passphrase ? "Key Passphrase" : "Password", text: $secret)
+            SecureField(request.kind == .passphrase ? String(localized: "Key Passphrase") : String(localized: "Password"), text: $secret)
                 .textFieldStyle(.roundedBorder)
             Toggle("Remember in Keychain", isOn: $remember)
             HStack {
@@ -365,7 +365,7 @@ struct HostKeyPrompt: View {
     var body: some View {
         let c = request.challenge
         VStack(alignment: .leading, spacing: 14) {
-            Label(c.otherKnownTypes.isEmpty ? "Unknown Server" : "Server Key Type Changed",
+            Label(c.otherKnownTypes.isEmpty ? String(localized: "Unknown Server") : String(localized: "Server Key Type Changed"),
                   systemImage: c.otherKnownTypes.isEmpty ? "questionmark.diamond" : "exclamationmark.triangle.fill")
                 .font(.headline)
                 .foregroundStyle(c.otherKnownTypes.isEmpty ? Color.primary : Color.orange)

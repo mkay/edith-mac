@@ -34,6 +34,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.singular.edith
         PRODUCT_NAME: Edith
+        # Rendered from the Linux icon by scripts/make-app-icon.swift.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Not sandboxed: ~/.ssh, the agent socket and external editors need
         # the real filesystem. Distribution is Developer ID + notarisation.
         ENABLE_APP_SANDBOX: NO

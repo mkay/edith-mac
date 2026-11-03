@@ -6,6 +6,14 @@ The editor is Monaco, hosted in a `WKWebView`.
 
 **[Download the latest release](https://github.com/mkay/edith-mac/releases/latest)**
 
+![The server list, grouped by folder](docs/screenshots/servers.png)
+
+![Browsing a server and editing a file in Monaco](docs/screenshots/editor.png)
+
+![Open files as tabs, with the file list beside them](docs/screenshots/tabs.png)
+
+![Connected, with recent files to pick up where you left off](docs/screenshots/connected.png)
+
 ## Installing
 
 Download `Edith-<version>.dmg` from the [latest release](https://github.com/mkay/edith-mac/releases/latest)

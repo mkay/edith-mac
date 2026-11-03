@@ -20,6 +20,8 @@ final class AppModel {
     private(set) var pinnedServerIDs: [String] = []
     private(set) var editorPreferences = EditorPreferences()
     @ObservationIgnored private var windows: [WeakWindow] = []
+    @ObservationIgnored private var sessionRestored = false
+    @ObservationIgnored private let sessionKey: String
 
     private struct WeakWindow {
         weak var model: WindowModel?
@@ -44,6 +46,7 @@ final class AppModel {
             certificates = CertificateStore()
             keychain = Keychain()
         }
+        sessionKey = environment["EDITH_CONFIG_DIR"] == nil ? "lastSession" : "lastSession.dev"
         isFirstRun = !config.exists
         config.backupNow()
         reload()
@@ -64,6 +67,36 @@ final class AppModel {
         let old = editorPreferences
         editorPreferences = new
         try new.save(to: config, replacing: old)
+    }
+
+    // MARK: Last session
+
+    /// Where a window was: kept in the app's defaults rather than
+    /// servers.json, which would otherwise be rewritten on every click.
+    struct LastSession: Codable, Equatable {
+        var serverID: String
+        var path: String
+        var tabs: [String]
+    }
+
+    func rememberSession(_ session: LastSession?) {
+        if let session, let data = try? JSONEncoder().encode(session) {
+            UserDefaults.standard.set(data, forKey: sessionKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: sessionKey)
+        }
+    }
+
+    /// The session to restore, once per launch, if that's switched on and
+    /// the server still exists.
+    func takeSessionToRestore() -> (LastSession, Server)? {
+        guard !sessionRestored, editorPreferences.restoreSession else { return nil }
+        sessionRestored = true
+        guard let data = UserDefaults.standard.data(forKey: sessionKey),
+              let session = try? JSONDecoder().decode(LastSession.self, from: data),
+              let server = server(id: session.serverID)
+        else { return nil }
+        return (session, server)
     }
 
     // MARK: Windows

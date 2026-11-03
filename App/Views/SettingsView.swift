@@ -138,6 +138,7 @@ private struct FileSettingsTab: View {
         Form {
             Section("Browsing") {
                 Toggle("Open files and folders with a single click", isOn: pref(\.singleClickOpen))
+                Toggle("Reconnect to the last server, folder and tabs on launch", isOn: pref(\.restoreSession))
                 LabeledContent("Tools Folder") {
                     HStack {
                         Text(app.editorPreferences.toolsFolder.isEmpty ? "None" : (app.editorPreferences.toolsFolder as NSString).abbreviatingWithTildeInPath)

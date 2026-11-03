@@ -3,6 +3,7 @@
 
 import AppKit
 import EdithCore
+import Quartz
 import EdithEditor
 import SwiftUI
 import UniformTypeIdentifiers
@@ -260,8 +261,41 @@ struct FileTable: NSViewRepresentable {
             case .rename:
                 guard selectedFiles.count == 1 else { return false }
                 window.rename(selectedFiles[0])
+            case .quickLook:
+                quickLook()
             }
             return true
+        }
+
+        // MARK: Quick Look
+
+        /// Space shows the selected files in Quick Look, as in Finder, after
+        /// downloading them; Space again closes the panel.
+        private func quickLook() {
+            guard let table, let panel = QLPreviewPanel.shared() else { return }
+            if QLPreviewPanel.sharedPreviewPanelExists() && panel.isVisible {
+                panel.orderOut(nil)
+                return
+            }
+            let files = selectedFiles.filter { !$0.isDirectory }
+            guard let session = connection?.session, !files.isEmpty else { return }
+            Task {
+                var urls: [URL] = []
+                for file in files {
+                    guard let local = try? TempFiles.shared.path(for: file.path) else { continue }
+                    do {
+                        try await session.download(file, to: local)
+                        urls.append(local)
+                    } catch {
+                        break
+                    }
+                }
+                guard !urls.isEmpty else { return }
+                table.previewItems = urls
+                table.window?.makeFirstResponder(table)
+                panel.makeKeyAndOrderFront(nil)
+                panel.reloadData()
+            }
         }
 
         // MARK: Context menu
@@ -415,10 +449,28 @@ struct FileTable: NSViewRepresentable {
 // MARK: - Pieces
 
 /// The table, with the Linux app's keys: Return opens, Backspace or ⌘↑ goes
-/// up, ⌘⌫ or Delete deletes, F2 renames.
-final class FileTableView: NSTableView {
-    enum Key { case open, up, delete, rename }
+/// up, ⌘⌫ or Delete deletes, F2 renames; and Finder's Space for Quick Look.
+final class FileTableView: NSTableView, @preconcurrency QLPreviewPanelDataSource {
+    enum Key { case open, up, delete, rename, quickLook }
     var keyHandler: ((Key) -> Bool)?
+    /// Local copies of the selected files, shown in the Quick Look panel.
+    var previewItems: [URL] = []
+
+    override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool { true }
+
+    override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        panel.dataSource = self
+    }
+
+    override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        panel.dataSource = nil
+    }
+
+    func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int { previewItems.count }
+
+    func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
+        previewItems[index] as NSURL
+    }
 
     override func keyDown(with event: NSEvent) {
         let command = event.modifierFlags.contains(.command)
@@ -430,6 +482,7 @@ final class FileTableView: NSTableView {
         case 51: .up                                 // ⌫
         case 117: .delete                            // ⌦
         case 120: .rename                            // F2
+        case 49: .quickLook                          // Space
         default: nil
         }
         if let key, keyHandler?(key) == true { return }

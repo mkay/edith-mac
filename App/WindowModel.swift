@@ -199,6 +199,8 @@ final class WindowModel {
 
     func attach(_ window: NSWindow) {
         hostWindow = window
+        // Remembers size and position; only the first window gets the name.
+        window.setFrameAutosaveName("Edith")
         if closeGuard == nil {
             closeGuard = WindowCloseGuard(window: window) { [weak self] in self?.windowShouldClose() ?? true }
         }
@@ -253,12 +255,19 @@ final class WindowModel {
 
     // MARK: Connecting
 
-    func connect(_ server: Server) {
+    func connect(_ server: Server, then restore: AppModel.LastSession? = nil) {
         guard isDisconnected else { return }
-        Task { await connectFlow(server) }
+        Task { await connectFlow(server, restoring: restore) }
     }
 
-    private func connectFlow(_ server: Server) async {
+    /// Where this window is, for picking up there on the next launch.
+    var sessionSnapshot: AppModel.LastSession? {
+        guard let connection else { return nil }
+        return .init(serverID: connection.server.id, path: connection.browser.path,
+                     tabs: connection.editor.orderedTabs.map(\.document.remotePath))
+    }
+
+    private func connectFlow(_ server: Server, restoring restore: AppModel.LastSession? = nil) async {
         var secret = server.secretKind == .none ? nil : app.secret(for: server)
         var remember = false
         if server.secretKind != .none && secret == nil {
@@ -277,7 +286,14 @@ final class WindowModel {
                 if remember, let secret { try? app.keychain.setSecret(secret, for: server.id) }
                 let connection = Connection(session: session, app: app, window: self)
                 phase = .connected(connection)
-                await connection.browser.open(session.startDirectory)
+                await connection.browser.open(restore?.path ?? session.startDirectory)
+                if connection.browser.error != nil, restore != nil {
+                    await connection.browser.open(session.startDirectory)
+                }
+                // Tabs whose files are gone simply don't come back.
+                for path in restore?.tabs ?? [] {
+                    try? await connection.editor.open(path)
+                }
                 return
             } catch RemoteError.authenticationFailed(let reason) where server.secretKind != .none {
                 // Wrong or missing password: ask again rather than give up.
@@ -317,19 +333,22 @@ final class WindowModel {
     /// Disconnects, asking first if any tab has unsaved changes.
     func disconnect() {
         guard let connection else { return }
-        guard connection.editor.hasUnsavedChanges else { return forceDisconnect() }
+        guard connection.editor.hasUnsavedChanges else { return forceDisconnect(forgetSession: true) }
         Task {
             let answer = await choose(
                 title: String(localized: "Disconnect with Unsaved Changes?"),
                 message: String(localized: "Unsaved changes in: ") + connection.editor.orderedTabs.filter { $0.document.isModified || $0.document.isDeleted }.map(\.document.name).joined(separator: ", "),
                 buttons: [.init(String(localized: "Discard and Disconnect"), role: .destructive)]
             )
-            if answer == 0 { forceDisconnect() }
+            if answer == 0 { forceDisconnect(forgetSession: true) }
         }
     }
 
-    func forceDisconnect() {
+    /// Ends the connection. A deliberate disconnect forgets the session;
+    /// closing the window or quitting keeps it for the next launch.
+    func forceDisconnect(forgetSession: Bool = false) {
         guard let connection else { return }
+        if forgetSession { app.rememberSession(nil) }
         connection.editor.shutdown()
         connection.externalEdits.values.forEach { $0.cancel() }
         connection.externalEdits = [:]

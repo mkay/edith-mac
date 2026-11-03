@@ -33,6 +33,8 @@ struct EditorPreferences: Equatable {
     /// Extension (no dot) to the app that opens it, by path. The Linux app's
     /// `file_associations` hold desktop ids, so the Mac keeps its own key.
     var appAssociations: [String: String] = [:]
+    /// Reconnect to the last server, folder and tabs on launch.
+    var restoreSession = true
 
     static func load(from config: ConfigStore) -> EditorPreferences {
         var p = EditorPreferences()
@@ -53,6 +55,7 @@ struct EditorPreferences: Equatable {
         p.singleClickOpen = config.preference("single_click_open") ?? p.singleClickOpen
         p.toolsFolder = config.preference("tools_folder") ?? p.toolsFolder
         p.appAssociations = config.preference("mac_file_associations") ?? p.appAssociations
+        p.restoreSession = config.preference("mac_restore_session") ?? p.restoreSession
         return p
     }
 
@@ -74,6 +77,7 @@ struct EditorPreferences: Equatable {
         if singleClickOpen != old.singleClickOpen { try config.setPreference("single_click_open", singleClickOpen) }
         if toolsFolder != old.toolsFolder { try config.setPreference("tools_folder", toolsFolder) }
         if appAssociations != old.appAssociations { try config.setPreference("mac_file_associations", appAssociations) }
+        if restoreSession != old.restoreSession { try config.setPreference("mac_restore_session", restoreSession) }
     }
 
     func configuration(dark: Bool) -> EditorConfiguration {

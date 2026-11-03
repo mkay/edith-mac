@@ -22,6 +22,10 @@ struct MainWindow: View {
                 let model = WindowModel(app: app)
                 window = model
                 if app.shouldShowWhatsNew(version: WhatsNewView.version) { model.showWhatsNew = true }
+                if let (session, server) = app.takeSessionToRestore() {
+                    model.selectedServerIDs = [server.id]
+                    model.connect(server, then: session)
+                }
             }
         }
     }
@@ -74,6 +78,9 @@ private struct WindowContent: View {
         .onDisappear { window.forceDisconnect() }
         .background(WindowAccessor { window.attach($0) })
         .onChange(of: window.hasUnsavedChanges) { _, unsaved in window.hostWindow?.isDocumentEdited = unsaved }
+        .onChange(of: window.sessionSnapshot) { _, snapshot in
+            if let snapshot { window.app.rememberSession(snapshot) }
+        }
         .onChange(of: window.showFileDetails) { _, show in window.fitSidebar(toDetails: show) }
         .debugHooks(window)
     }

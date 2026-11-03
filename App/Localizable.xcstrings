@@ -2253,6 +2253,16 @@
         }
       }
     },
+    "Reconnect to the last server, folder and tabs on launch": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beim Start mit dem letzten Server, Ordner und den Tabs wieder verbinden"
+          }
+        }
+      }
+    },
     "Refresh": {
       "localizations": {
         "de": {

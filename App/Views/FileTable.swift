@@ -513,7 +513,8 @@ final class FileCell: NSTableCellView {
 @MainActor
 enum FileIcons {
     private static var cache: [String: NSImage] = [:]
-    static let folder = NSWorkspace.shared.icon(for: .folder)
+    /// Finder's folder, without its blue: grey sits better in the sidebar.
+    static let folder = desaturated(NSWorkspace.shared.icon(for: .folder))
     static let parent = NSImage(systemSymbolName: "arrow.turn.left.up", accessibilityDescription: "Parent folder")!
 
     static func icon(for file: RemoteFile) -> NSImage {
@@ -523,5 +524,22 @@ enum FileIcons {
         let image = NSWorkspace.shared.icon(for: UTType(filenameExtension: ext) ?? .data)
         cache[ext] = image
         return image
+    }
+
+    /// A greyscale version, drawn at whatever size and resolution it's
+    /// asked for: the icon, grey blended in "saturation" mode (keeping only
+    /// its lightness), then trimmed back to the icon's own shape.
+    private static func desaturated(_ icon: NSImage) -> NSImage {
+        NSImage(size: icon.size, flipped: false) { rect in
+            guard let context = NSGraphicsContext.current?.cgContext else { return false }
+            context.beginTransparencyLayer(auxiliaryInfo: nil)
+            icon.draw(in: rect)
+            context.setBlendMode(.saturation)
+            context.setFillColor(NSColor.gray.cgColor)
+            context.fill(rect)
+            icon.draw(in: rect, from: .zero, operation: .destinationIn, fraction: 1)
+            context.endTransparencyLayer()
+            return true
+        }
     }
 }

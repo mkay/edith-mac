@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Monaco
+        run: scripts/fetch-monaco.sh
+      - name: Test EdithCore
+        run: swift test --package-path Packages/EdithCore
+      - name: Test EdithEditor
+        run: swift test --package-path Packages/EdithEditor
+      - name: Build app
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -project Edith.xcodeproj -scheme Edith -configuration Debug \
+            -derivedDataPath build/DerivedData CODE_SIGNING_ALLOWED=NO build

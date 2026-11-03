@@ -1,0 +1,30 @@
+{
+  "servers": [
+    {
+      "name": "Production",
+      "host": "example.com",
+      "port": 22,
+      "username": "deploy",
+      "key_file": "/home/mk/.ssh/id_ed25519",
+      "auth_method": "key",
+      "protocol": "sftp",
+      "ftp_encryption": "none",
+      "initial_directory": "/var/www",
+      "id": "6f1c2a7e-0d1b-4c55-9a51-2f7d3e8b9c01",
+      "folder_id": "a3e9b0f2-5c41-4e8a-b7d2-1c9f0e6a4b32"
+    },
+    {
+      "host": "ftp.example.org",
+      "port": 21,
+      "username": "web",
+      "protocol": "ftp",
+      "ftp_encryption": "explicit_required",
+      "id": "0b7d4c1e-9a2f-4e63-8c15-d4a6f2b9e870",
+      "some_future_field": true
+    }
+  ],
+  "folders": [
+    { "name": "Clients", "id": "a3e9b0f2-5c41-4e8a-b7d2-1c9f0e6a4b32", "expanded": false }
+  ],
+  "preferences": { "editor_font_size": 14 }
+}

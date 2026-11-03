@@ -1,0 +1,52 @@
+# Generate Edith.xcodeproj with `xcodegen generate`. The project file is not
+# checked in; this is the source of truth.
+name: Edith
+options:
+  bundleIdPrefix: de.singular
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  EdithCore:
+    path: Packages/EdithCore
+  EdithEditor:
+    path: Packages/EdithEditor
+targets:
+  Edith:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: EdithCore
+      - package: EdithEditor
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Edith
+        LSApplicationCategoryType: public.app-category.developer-tools
+        NSHumanReadableCopyright: "© 2026 Kreuder. GPL-3.0-or-later."
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.singular.edith
+        PRODUCT_NAME: Edith
+        # Not sandboxed: ~/.ssh, the agent socket and external editors need
+        # the real filesystem. Distribution is Developer ID + notarisation.
+        ENABLE_APP_SANDBOX: NO
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        GENERATE_INFOPLIST_FILE: NO
+schemes:
+  Edith:
+    build:
+      targets:
+        Edith: all
+    test:
+      targets:
+        - package: EdithCore/EdithCoreTests
+        - package: EdithEditor/EdithEditorTests

@@ -120,6 +120,19 @@ public final class ConfigStore: Sendable {
         }
     }
 
+    /// True when the file exists but doesn't parse. It reads as empty then,
+    /// and every write is refused, so the app has to say why the server list
+    /// is empty and changes don't stick.
+    public var isDamaged: Bool {
+        cache.withLock { cache in
+            do { _ = try read(&cache); return false } catch { return true }
+        }
+    }
+
+    public var backupsURL: URL {
+        fileURL.deletingLastPathComponent().appending(path: "backups")
+    }
+
     public var exists: Bool {
         FileManager.default.fileExists(atPath: fileURL.path)
     }

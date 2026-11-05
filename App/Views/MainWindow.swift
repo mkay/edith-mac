@@ -21,7 +21,12 @@ struct MainWindow: View {
             if window == nil {
                 let model = WindowModel(app: app)
                 window = model
-                if app.shouldShowWhatsNew(version: WhatsNewView.version) { model.showWhatsNew = true }
+                if app.config.isDamaged {
+                    model.message = Message(
+                        title: String(localized: "Server List Can’t Be Read"),
+                        text: String(localized: "\(app.config.fileURL.path) is damaged. Edith won’t change it, so servers and settings you change now will not be saved.\n\nRepair the file, or replace it with a backup from \(app.config.backupsURL.path), then restart Edith.")
+                    )
+                } else if app.shouldShowWhatsNew(version: WhatsNewView.version) { model.showWhatsNew = true }
                 if let (session, server) = app.takeSessionToRestore() {
                     model.selectedServerIDs = [server.id]
                     model.connect(server, then: session)

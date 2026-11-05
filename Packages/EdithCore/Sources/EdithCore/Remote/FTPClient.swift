@@ -441,14 +441,15 @@ public actor FTPClient: RemoteFileSystem {
         let total = size.code == 213 ? UInt64(size.text.dropFirst(4).trimmingCharacters(in: .whitespaces)) ?? 0 : 0
 
         try FileManager.default.createDirectory(at: localURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        guard FileManager.default.createFile(atPath: localURL.path, contents: nil) else {
+        let part = PartialDownload.url(for: localURL)
+        guard FileManager.default.createFile(atPath: part.path, contents: nil) else {
             throw RemoteError.failed(String(localized: "Can't write \(localURL.path).", bundle: .module))
         }
-        let out = try FileHandle(forWritingTo: localURL)
+        let out = try FileHandle(forWritingTo: part)
         var completed = false
         defer {
             try? out.close()
-            if !completed { try? FileManager.default.removeItem(at: localURL) }
+            if !completed { try? FileManager.default.removeItem(at: part) }
         }
 
         let data = try openData("RETR \(remotePath)", path: remotePath)
@@ -469,6 +470,8 @@ public actor FTPClient: RemoteFileSystem {
             throw error is CancellationError ? error : RemoteError.failed(error.localizedDescription)
         }
         try finish(data, path: remotePath)
+        try out.close()
+        try PartialDownload.finish(part, as: localURL)
         completed = true
     }
 

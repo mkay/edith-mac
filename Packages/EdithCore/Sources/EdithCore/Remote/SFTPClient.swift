@@ -396,15 +396,16 @@ public actor SFTPClient: RemoteFileSystem {
         let total = libssh2_sftp_fstat_ex(handle, &attrs, 0) == 0 ? attrs.filesize : 0
 
         try FileManager.default.createDirectory(at: localURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        guard FileManager.default.createFile(atPath: localURL.path, contents: nil) else {
+        let part = PartialDownload.url(for: localURL)
+        guard FileManager.default.createFile(atPath: part.path, contents: nil) else {
             throw RemoteError.failed(String(localized: "Can't write \(localURL.path).", bundle: .module))
         }
-        let out = try FileHandle(forWritingTo: localURL)
+        let out = try FileHandle(forWritingTo: part)
         var completed = false
         defer {
             try? out.close()
             // A partial file must not be mistaken for the real one.
-            if !completed { try? FileManager.default.removeItem(at: localURL) }
+            if !completed { try? FileManager.default.removeItem(at: part) }
         }
 
         var buffer = [CChar](repeating: 0, count: Self.chunkSize)
@@ -419,6 +420,8 @@ public actor SFTPClient: RemoteFileSystem {
             done += UInt64(n)
             progress?(done, total)
         }
+        try out.close()
+        try PartialDownload.finish(part, as: localURL)
         completed = true
     }
 

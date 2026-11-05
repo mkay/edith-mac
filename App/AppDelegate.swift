@@ -37,7 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 /// which SwiftUI has no API for, and passes everything else through.
 @MainActor
 final class WindowCloseGuard: NSObject, NSWindowDelegate {
-    private weak var original: (any NSWindowDelegate)?
+    /// Strong, because AppKit asks `responds(to:)` once and then sends
+    /// notifications here. If this delegate went away, those would have nowhere
+    /// to go and the app would crash.
+    private let original: (any NSWindowDelegate)?
     private let shouldClose: () -> Bool
 
     init(window: NSWindow, shouldClose: @escaping () -> Bool) {

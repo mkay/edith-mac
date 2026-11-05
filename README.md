@@ -6,6 +6,8 @@ The editor is Monaco, hosted in a `WKWebView`.
 
 **[Download the latest release](https://github.com/mkay/edith-mac/releases/latest)**
 
+<img src="docs/icon.png" alt="Edith icon" width="128">
+
 ![The server list, grouped by folder](docs/screenshots/servers.png)
 
 ![Browsing a server and editing a file in Monaco](docs/screenshots/editor.png)

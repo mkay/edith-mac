@@ -140,6 +140,7 @@ final class EditorController {
     @discardableResult
     func save(_ tab: EditorTab) async -> Bool {
         guard !tab.isSaving else { return false }
+        if let window, !(await window.ensureConnected()) { return false }
         tab.isSaving = true
         defer { tab.isSaving = false }
 

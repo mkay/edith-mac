@@ -15,6 +15,19 @@ struct SessionTests {
                                   hostKeys: server.hostKeyStore(), approveHostKey: { _ in false })
     }
 
+    @Test func reconnectReplacesTheClients() async throws {
+        let dir = try server.scratch()
+        let session = try await connect(initialDirectory: dir)
+        let before = session.client
+        #expect(await session.isConnected)
+        try await session.reconnect()
+        #expect(session.client !== before)
+        #expect(await session.isConnected)
+        #expect(!(await before.isConnected))
+        _ = try await session.client.list(dir)
+        await session.close()
+    }
+
     @Test func startDirectoryResolution() async throws {
         let dir = try server.scratch()
         let home = NSHomeDirectory()

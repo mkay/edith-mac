@@ -30,6 +30,22 @@
         }
       }
     },
+    "%@ is damaged. Edith won’t change it, so servers and settings you change now will not be saved.\n\nRepair the file, or replace it with a backup from %@, then restart Edith.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ is damaged. Edith won’t change it, so servers and settings you change now will not be saved.\n\nRepair the file, or replace it with a backup from %2$@, then restart Edith."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ist beschädigt. Edith ändert sie nicht, daher werden Server und Einstellungen, die du jetzt änderst, nicht gespeichert.\n\nRepariere die Datei oder ersetze sie durch ein Backup aus %@ und starte Edith neu."
+          }
+        }
+      }
+    },
     "%lld": {
       "shouldTranslate": false
     },
@@ -381,6 +397,7 @@
         }
       }
     },
+    "Check for Updates…": {},
     "Choose App…": {
       "localizations": {
         "de": {
@@ -587,6 +604,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Verbinde mit %@…"
+          }
+        }
+      }
+    },
+    "Connection Lost": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbindung verloren"
           }
         }
       }
@@ -2253,12 +2280,32 @@
         }
       }
     },
+    "Reconnect": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erneut verbinden"
+          }
+        }
+      }
+    },
     "Reconnect to the last server, folder and tabs on launch": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Beim Start mit dem letzten Server, Ordner und den Tabs wieder verbinden"
+          }
+        }
+      }
+    },
+    "Reconnected": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbindung wiederhergestellt"
           }
         }
       }
@@ -2576,6 +2623,16 @@
         }
       }
     },
+    "Server List Can’t Be Read": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serverliste nicht lesbar"
+          }
+        }
+      }
+    },
     "Servers Exported": {
       "localizations": {
         "de": {
@@ -2832,6 +2889,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Das SVG enthält vielleicht einen Fehler. Die Vorschau aktualisiert sich beim Speichern."
+          }
+        }
+      }
+    },
+    "The connection to “%@” was lost. Your open tabs and unsaved changes are kept.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Verbindung zu „%@“ wurde unterbrochen. Deine offenen Tabs und ungespeicherten Änderungen bleiben erhalten."
           }
         }
       }

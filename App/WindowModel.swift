@@ -286,6 +286,7 @@ final class WindowModel {
                 if remember, let secret { try? app.keychain.setSecret(secret, for: server.id) }
                 let connection = Connection(session: session, app: app, window: self)
                 phase = .connected(connection)
+                watchConnection(connection)
                 await connection.browser.open(restore?.path ?? session.startDirectory)
                 if connection.browser.error != nil, restore != nil {
                     await connection.browser.open(session.startDirectory)
@@ -330,6 +331,68 @@ final class WindowModel {
         }
     }
 
+    // MARK: Lost connections
+
+    @ObservationIgnored private var monitor: Task<Void, Never>?
+    @ObservationIgnored private var reconnecting: Task<Bool, Never>?
+
+    /// Checks every two seconds whether the connection is still up, which
+    /// costs no network traffic: the clients note a drop themselves.
+    private func watchConnection(_ connection: Connection) {
+        monitor?.cancel()
+        monitor = Task { [weak self, weak connection] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard let self, let connection, !Task.isCancelled else { return }
+                if await !connection.session.isConnected { _ = await ensureConnected() }
+            }
+        }
+    }
+
+    /// True if the connection is up, offering to reconnect first if it
+    /// isn't. Open tabs and unsaved edits stay in place meanwhile, so
+    /// declining only means the next action asks again.
+    func ensureConnected() async -> Bool {
+        guard let connection else { return false }
+        if await connection.session.isConnected { return true }
+        if let reconnecting { return await reconnecting.value }
+        let task = Task { await offerReconnect(connection) }
+        reconnecting = task
+        let result = await task.value
+        reconnecting = nil
+        return result
+    }
+
+    private func offerReconnect(_ connection: Connection) async -> Bool {
+        var failure: String?
+        while true {
+            let name = connection.server.displayName
+            var text = String(localized: "The connection to “\(name)” was lost. Your open tabs and unsaved changes are kept.")
+            if let failure { text += "\n\n" + failure }
+            let answer = await choose(
+                title: String(localized: "Connection Lost"),
+                message: text,
+                buttons: [.init(String(localized: "Reconnect")), .init(String(localized: "Disconnect"), role: .destructive)]
+            )
+            switch answer {
+            case 0:
+                do {
+                    try await connection.session.reconnect()
+                    await connection.browser.refresh()
+                    announce(String(localized: "Reconnected"))
+                    return true
+                } catch {
+                    failure = error.localizedDescription
+                }
+            case 1:
+                forceDisconnect()
+                return false
+            default:
+                return false
+            }
+        }
+    }
+
     /// Disconnects, asking first if any tab has unsaved changes.
     func disconnect() {
         guard let connection else { return }
@@ -349,6 +412,8 @@ final class WindowModel {
     func forceDisconnect(forgetSession: Bool = false) {
         guard let connection else { return }
         if forgetSession { app.rememberSession(nil) }
+        monitor?.cancel()
+        monitor = nil
         connection.editor.shutdown()
         connection.externalEdits.values.forEach { $0.cancel() }
         connection.externalEdits = [:]
@@ -565,10 +630,11 @@ final class WindowModel {
     func open(_ file: RemoteFile) {
         guard let connection else { return }
         if file.isDirectory {
-            Task { await connection.browser.open(file.path) }
+            Task { if await ensureConnected() { await connection.browser.open(file.path) } }
             return
         }
         Task {
+            guard await ensureConnected() else { return }
             do {
                 try await connection.editor.open(file.path)
                 connection.reloadRecents()
@@ -596,7 +662,7 @@ final class WindowModel {
 
     func navigate(to path: String) {
         guard let connection else { return }
-        Task { await connection.browser.open(path) }
+        Task { if await ensureConnected() { await connection.browser.open(path) } }
     }
 
     func newFile() {
@@ -699,7 +765,7 @@ final class WindowModel {
 
     func refresh() {
         guard let browser = connection?.browser else { return }
-        Task { await browser.refresh() }
+        Task { if await ensureConnected() { await browser.refresh() } }
     }
 
     // MARK: Transfers

@@ -12,7 +12,8 @@ import OSLog
 @Observable
 public final class Session {
     public let server: Server
-    public let client: any RemoteFileSystem
+    /// Replaced by `reconnect()`, so callers must read it afresh each time.
+    public private(set) var client: any RemoteFileSystem
     public let transfers = TransferQueue()
     /// The login directory, from `normalize(".")`.
     public let home: String
@@ -113,6 +114,35 @@ public final class Session {
         }
         transferClient = task
         return await task.value
+    }
+
+    /// Whether the browsing connection is still up. False once either client
+    /// noticed the drop (a failed keepalive, a reset socket).
+    public var isConnected: Bool {
+        get async {
+            if !(await client.isConnected) { return false }
+            if let transferClient {
+                let other = await transferClient.value
+                if other !== client, !(await other.isConnected) { return false }
+            }
+            return true
+        }
+    }
+
+    /// Opens fresh connections after a drop. The window's tabs, folder and
+    /// transfer log stay as they are; only the clients underneath change.
+    public func reconnect() async throws {
+        let fresh = try await makeClient()
+        let old = client
+        let oldTransfer = transferClient
+        client = fresh
+        transferClient = nil
+        canExec = await fresh.canExec
+        await old.close()
+        if let oldTransfer {
+            let other = await oldTransfer.value
+            if other !== old { await other.close() }
+        }
     }
 
     public func close() async {

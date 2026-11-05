@@ -1,6 +1,8 @@
 // Renders the Linux app's SVG icon into App/Assets.xcassets/AppIcon.appiconset,
-// placed on the macOS icon grid: the artwork fills an 824 pt rounded square
-// (continuous corners) centred on a 1024 pt canvas, as macOS expects.
+// placed on the macOS icon grid: a light 824 pt rounded square (continuous
+// corners) centred on a 1024 pt canvas, as macOS expects, with the artwork on
+// it. The Linux icon is a mark without a tile, and macOS would shrink such an
+// icon into a grey one.
 //
 //     swift scripts/make-app-icon.swift path/to/de.singular.edith.svg
 
@@ -26,7 +28,10 @@ func render(pixels: Int) -> Data {
     // Apple's grid uses a 185.4 pt continuous-corner radius at 824 pt.
     let mask = NSBezierPath(roundedRect: body, xRadius: 185.4 * scale, yRadius: 185.4 * scale)
     mask.addClip()
-    svg.draw(in: body, from: .zero, operation: .sourceOver, fraction: 1)
+    NSGradient(starting: NSColor(red: 0.96, green: 0.92, blue: 0.98, alpha: 1),
+               ending: NSColor(red: 0.86, green: 0.77, blue: 0.93, alpha: 1))!.draw(in: body, angle: -90)
+    // The mark nearly fills its own square, so this margin sets its size.
+    svg.draw(in: body.insetBy(dx: 70 * scale, dy: 70 * scale), from: .zero, operation: .sourceOver, fraction: 1)
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!
 }

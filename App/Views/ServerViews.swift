@@ -109,6 +109,8 @@ struct ServerListView: View {
                         }
                     }
                 }
+                .scrollContentBackground(.hidden)
+                .background(Color.accentColor.opacity(0.06))
                 .contextMenu(forSelectionType: String.self) { ids in
                     if let id = ids.first, ids.count == 1, let server = app.server(id: id) {
                         menu(for: server)

@@ -1,20 +1,35 @@
 # Edith for macOS
 
-A native macOS SFTP/FTP client for live remote file editing, rebuilt in
-Swift and SwiftUI from [Edith for Linux](https://github.com/mkay/edith).
-The editor is Monaco, hosted in a `WKWebView`.
+A native Mac app for editing files live on your servers. Connect over SFTP, FTP or FTPS,
+open a file in a tab, change it, and it is uploaded as you save. No separate download,
+edit and upload steps.
+
+It is the Mac version of [Edith for Linux](https://github.com/mkay/edith), and the two read
+each other's server lists.
 
 **[Download the latest release](https://github.com/mkay/edith-mac/releases/latest)**
 
 <img src="docs/icon.png" alt="Edith icon" width="128">
 
-![The server list, grouped by folder](docs/screenshots/servers.png)
-
 ![Browsing a server and editing a file in Monaco](docs/screenshots/editor.png)
+
+![The server list, grouped by folder](docs/screenshots/servers.png)
 
 ![Open files as tabs, with the file list beside them](docs/screenshots/tabs.png)
 
 ![Connected, with recent files to pick up where you left off](docs/screenshots/connected.png)
+
+## Features
+
+- SFTP, FTP and FTPS (explicit or implicit TLS), with password or key login
+- Saved servers in folders; passwords stay in your Keychain
+- Files open as tabs in the Monaco editor (the engine of VS Code), with syntax highlighting for many languages, Emmet, find and replace, and your choice of theme and font
+- Saving uploads the file; if it changes on the server meanwhile, Edith notices and reloads it
+- Drag files in to upload and out to download, with a transfer queue showing progress
+- Quick Look, archives, and your own tools folder of scripts to upload anywhere
+- Open any remote file in another app of your choice, per file type
+- Imports servers from Edith for Linux and from FileZilla
+- Updates itself; English and German
 
 ## Installing
 

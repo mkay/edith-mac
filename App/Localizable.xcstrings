@@ -397,7 +397,16 @@
         }
       }
     },
-    "Check for Updates…": {},
+    "Check for Updates…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach Updates suchen …"
+          }
+        }
+      }
+    },
     "Choose App…": {
       "localizations": {
         "de": {
@@ -1800,6 +1809,16 @@
         }
       }
     },
+    "Mixes the accent colour from System Settings ▸ Appearance into the sidebar and the server list.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mischt die Akzentfarbe aus Systemeinstellungen ▸ Erscheinungsbild in die Seitenleiste und die Serverliste."
+          }
+        }
+      }
+    },
     "Monaco editor options as JSON, applied over the settings above, for example {\"cursorStyle\": \"block\"}. Keys like \"html.format.wrapLineLength\" set language options.": {
       "localizations": {
         "de": {
@@ -2513,6 +2532,16 @@
     "SHA-256": {
       "shouldTranslate": false
     },
+    "Sidebar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seitenleiste"
+          }
+        }
+      }
+    },
     "SSH Key": {
       "localizations": {
         "de": {
@@ -2969,6 +2998,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dieser Export enthält Passwörter, verschlüsselt mit der beim Export gewählten Passphrase. Gib sie ein, um die Passwörter im Schlüsselbund zu sichern."
+          }
+        }
+      }
+    },
+    "Tint the sidebar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seitenleiste einfärben"
           }
         }
       }

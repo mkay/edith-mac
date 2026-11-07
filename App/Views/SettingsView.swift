@@ -155,6 +155,13 @@ private struct FileSettingsTab: View {
                 }
             }
 
+            Section("Sidebar") {
+                Toggle(isOn: pref(\.tintSidebar)) {
+                    Text("Tint the sidebar")
+                    Text("Mixes the accent colour from System Settings ▸ Appearance into the sidebar and the server list.")
+                }
+            }
+
             Section {
                 ForEach(app.editorPreferences.appAssociations.sorted(by: { $0.key < $1.key }), id: \.key) { ext, path in
                     LabeledContent(".\(ext)") {

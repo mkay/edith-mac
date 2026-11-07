@@ -62,6 +62,7 @@ struct FileSidebar: View {
                 active: true
             )
         }
+        .background(app.listBackground)
     }
 
     private var statusText: String {

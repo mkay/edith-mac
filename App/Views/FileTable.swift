@@ -68,10 +68,8 @@ struct FileTable: NSViewRepresentable {
         scroll.documentView = table
         scroll.hasVerticalScroller = true
         scroll.autohidesScrollers = true
-        // A faint accent tint, as in the Linux app. Alpha on the dynamic
-        // accent colour stays dynamic, so it follows the system setting.
-        scroll.drawsBackground = true
-        scroll.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.06)
+        // Clear, so that FileSidebar's tint shows through.
+        scroll.drawsBackground = false
         table.backgroundColor = .clear
         return scroll
     }

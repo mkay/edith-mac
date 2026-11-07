@@ -6,6 +6,13 @@ import SwiftUI
 
 // MARK: - Sidebar: groups
 
+extension AppModel {
+    /// A faint accent tint behind the lists, as in the Linux app and Stenmark.
+    var listBackground: Color {
+        editorPreferences.tintSidebar ? Color.accentColor.opacity(0.06) : .clear
+    }
+}
+
 /// All Servers, Without Group, then the groups in their saved order, each
 /// with a count. Servers dragged onto a group move into it.
 struct ServerSidebar: View {
@@ -40,6 +47,8 @@ struct ServerSidebar: View {
                 .onMove { from, to in try? app.moveFolders(from: from, to: to) }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(app.listBackground)
         .safeAreaInset(edge: .bottom) {
             StatusLine(text: String(localized: "Disconnected"), systemImage: "bolt.horizontal.circle", active: false)
         }
@@ -58,6 +67,7 @@ struct StatusLine: View {
     let text: String
     let systemImage: String
     let active: Bool
+    @Environment(AppModel.self) private var app
 
     var body: some View {
         HStack(spacing: 6) {
@@ -72,6 +82,8 @@ struct StatusLine: View {
         .font(.callout)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+        // Above the bar, whose material would otherwise hide the sidebar's tint.
+        .background(app.listBackground)
         .background(.bar)
     }
 }
@@ -110,7 +122,7 @@ struct ServerListView: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
-                .background(Color.accentColor.opacity(0.06))
+                .background(app.listBackground)
                 .contextMenu(forSelectionType: String.self) { ids in
                     if let id = ids.first, ids.count == 1, let server = app.server(id: id) {
                         menu(for: server)

@@ -35,6 +35,8 @@ struct EditorPreferences: Equatable {
     var appAssociations: [String: String] = [:]
     /// Reconnect to the last server, folder and tabs on launch.
     var restoreSession = true
+    /// A faint accent tint behind the server list and file list.
+    var tintSidebar = true
 
     static func load(from config: ConfigStore) -> EditorPreferences {
         var p = EditorPreferences()
@@ -56,6 +58,7 @@ struct EditorPreferences: Equatable {
         p.toolsFolder = config.preference("tools_folder") ?? p.toolsFolder
         p.appAssociations = config.preference("mac_file_associations") ?? p.appAssociations
         p.restoreSession = config.preference("mac_restore_session") ?? p.restoreSession
+        p.tintSidebar = config.preference("tint_sidebar") ?? p.tintSidebar
         return p
     }
 
@@ -78,6 +81,7 @@ struct EditorPreferences: Equatable {
         if toolsFolder != old.toolsFolder { try config.setPreference("tools_folder", toolsFolder) }
         if appAssociations != old.appAssociations { try config.setPreference("mac_file_associations", appAssociations) }
         if restoreSession != old.restoreSession { try config.setPreference("mac_restore_session", restoreSession) }
+        if tintSidebar != old.tintSidebar { try config.setPreference("tint_sidebar", tintSidebar) }
     }
 
     func configuration(dark: Bool) -> EditorConfiguration {

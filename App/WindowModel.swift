@@ -195,6 +195,10 @@ final class WindowModel {
     /// The AppKit window, for what SwiftUI can't do: resizing the sidebar,
     /// and asking before a window with unsaved changes closes.
     @ObservationIgnored private(set) weak var hostWindow: NSWindow?
+    /// The width of the main area, which the breadcrumbs size themselves from.
+    var detailWidth: CGFloat = 0 {
+        didSet { DispatchQueue.main.async { [weak self] in self?.remeasureHiddenToolbarItems() } }
+    }
     @ObservationIgnored private var closeGuard: WindowCloseGuard?
 
     func attach(_ window: NSWindow) {
@@ -422,6 +426,32 @@ final class WindowModel {
         showFileDetails = false
         showTransfers = false
         Task { await connection.session.close() }
+    }
+
+    // MARK: Toolbar
+
+    /// When space runs out, the toolbar should drop the breadcrumbs, which come
+    /// back by themselves, and not the Transfers button after them, which doesn't.
+    /// Returns false while the toolbar doesn't have the button yet.
+    func keepTransfersInToolbar() -> Bool {
+        let label = String(localized: "Transfers")
+        guard let item = hostWindow?.toolbar?.items.first(where: { $0.label == label }) else { return false }
+        item.visibilityPriority = .high
+        return true
+    }
+
+    /// An item the toolbar has moved to its overflow menu is out of the window,
+    /// so it stops laying out, keeps its old width and would never fit again.
+    /// A fast resize can do that to the breadcrumbs, which learn of it late.
+    private func remeasureHiddenToolbarItems() {
+        guard let toolbar = hostWindow?.toolbar else { return }
+        // SwiftUI can replace its toolbar items, which loses the priority.
+        _ = keepTransfersInToolbar()
+        let visible = Set((toolbar.visibleItems ?? []).map(\.itemIdentifier))
+        for item in toolbar.items where !visible.contains(item.itemIdentifier) {
+            item.view?.invalidateIntrinsicContentSize()
+            item.view?.layoutSubtreeIfNeeded()
+        }
     }
 
     // MARK: Sidebar

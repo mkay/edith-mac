@@ -44,6 +44,7 @@ private struct WindowContent: View {
             sidebar
         } detail: {
             detail
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { window.detailWidth = $0 }
         }
         // Connected, the breadcrumbs say where you are; a title would repeat them.
         .navigationTitle(window.connection == nil ? title : "")
@@ -128,6 +129,11 @@ private struct WindowContent: View {
         }
     }
 
+    /// Room in the main area's toolbar for everything but the breadcrumbs.
+    /// Measured: the toolbar overflows at about 360, and the rest is slack,
+    /// because the breadcrumbs learn of a resize a moment after the toolbar.
+    private static let toolbarReserve: CGFloat = 380
+
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         if let connection = window.connection {
             ToolbarItem(placement: .navigation) {
@@ -143,8 +149,8 @@ private struct WindowContent: View {
                 }
                 .controlGroupStyle(.navigation)
             }
-            ToolbarItem(placement: .principal) {
-                PathBar(browser: connection.browser)
+            ToolbarItem(placement: .navigation) {
+                PathBar(browser: connection.browser, width: window.detailWidth - Self.toolbarReserve)
             }
             ToolbarItem(placement: .primaryAction) {
                 TransferButton(log: connection.transfers)

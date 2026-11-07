@@ -175,31 +175,65 @@ struct PinnedFiles: View {
 /// Breadcrumbs for the current path. Each part opens that folder.
 struct PathBar: View {
     let browser: Browser
+    /// The space there is. The toolbar can't be left to work this out: it
+    /// moves an item that's too wide to its overflow menu, not shrinking it.
+    let width: CGFloat
 
     var body: some View {
         let parts = Array(remoteAncestors(browser.path).reversed())
-        HStack(spacing: 4) {
-            ForEach(Array(parts.enumerated()), id: \.element) { index, path in
-                if index > 0 {
-                    Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
-                }
-                Button {
-                    Task { await browser.open(path) }
-                } label: {
-                    if path == "/" {
-                        Image(systemName: "externaldrive").accessibilityLabel("Root")
-                    } else {
-                        Text(remoteName(path))
-                            .fontWeight(index == parts.count - 1 ? .semibold : .regular)
-                    }
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(index == parts.count - 1 ? .primary : .secondary)
+        // The full path first, then with more and more of the middle hidden.
+        ViewThatFits(in: .horizontal) {
+            ForEach(0...max(parts.count - 2, 0), id: \.self) { hidden in
+                crumbs(parts, hiding: hidden)
             }
         }
         .lineLimit(1)
+        .truncationMode(.middle)
         .padding(.horizontal, 12)
-        .frame(maxWidth: 560)
+        .frame(maxWidth: max(width, 80), alignment: .leading)
+    }
+
+    /// The root, an ellipsis for the `hidden` parts after it, and the rest.
+    private func crumbs(_ parts: [String], hiding hidden: Int) -> some View {
+        HStack(spacing: 4) {
+            crumb(parts[0], current: parts.count == 1)
+            if hidden > 0 {
+                separator
+                Menu {
+                    ForEach(parts[1...hidden].reversed(), id: \.self) { path in
+                        Button(remoteName(path)) { Task { await browser.open(path) } }
+                    }
+                } label: {
+                    Text(verbatim: "…")
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+            }
+            ForEach(parts[(hidden + 1)...], id: \.self) { path in
+                separator
+                crumb(path, current: path == parts.last)
+            }
+        }
+    }
+
+    private var separator: some View {
+        Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
+    }
+
+    private func crumb(_ path: String, current: Bool) -> some View {
+        Button {
+            Task { await browser.open(path) }
+        } label: {
+            if path == "/" {
+                Image(systemName: "externaldrive").accessibilityLabel("Root")
+            } else {
+                Text(remoteName(path))
+                    .fontWeight(current ? .semibold : .regular)
+            }
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(current ? .primary : .secondary)
     }
 }
 
@@ -221,6 +255,12 @@ struct TransferButton: View {
         }
         .help("Transfers")
         .disabled(log.jobs.isEmpty)
+        .task {
+            // The toolbar swaps its items in some time after this appears.
+            for _ in 0..<50 where !window.keepTransfersInToolbar() {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
         .popover(isPresented: $window.showTransfers, arrowEdge: .bottom) {
             TransferPanel(log: log)
         }

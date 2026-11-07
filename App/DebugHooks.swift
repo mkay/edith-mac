@@ -13,6 +13,8 @@ extension View {
     /// - `EDITH_SHOW_DETAILS=1` turns on the file details columns.
     /// - `EDITH_OPEN=a.php,b.css` opens those files (relative to the start
     ///   directory) after connecting.
+    /// - `EDITH_WINDOW_WIDTH=<points>` resizes the window before the snapshot,
+    ///   by `EDITH_WINDOW_STEP` points at a time if that's set.
     /// - `EDITH_SNAPSHOT=/path/out.png` saves the window after
     ///   `EDITH_SNAPSHOT_DELAY` seconds (default 3), then quits.
     ///
@@ -62,6 +64,18 @@ private struct DebugHooks: ViewModifier {
             guard let path = env["EDITH_SNAPSHOT"] else { return }
             let delay = Double(env["EDITH_SNAPSHOT_DELAY"] ?? "") ?? 3
             try? await Task.sleep(for: .seconds(delay))
+            if let width = Double(env["EDITH_WINDOW_WIDTH"] ?? ""), let host = window.hostWindow {
+                // In steps, as a drag would, unless EDITH_WINDOW_STEP is 0.
+                let step = Double(env["EDITH_WINDOW_STEP"] ?? "") ?? 0
+                var current = host.contentLayoutRect.width
+                while step > 0, abs(current - width) > step {
+                    current += current < width ? step : -step
+                    host.setContentSize(NSSize(width: current, height: host.contentLayoutRect.height))
+                    try? await Task.sleep(for: .milliseconds(16))
+                }
+                host.setContentSize(NSSize(width: width, height: host.contentLayoutRect.height))
+                try? await Task.sleep(for: .seconds(1))
+            }
             if let bridge = window.connection?.editor.selected?.bridge {
                 let js = "JSON.stringify({w: innerWidth, h: innerHeight, layout: monaco.editor.getEditors()[0].getLayoutInfo().width, lines: monaco.editor.getModels()[0].getLineCount(), visible: document.visibilityState})"
                 webProbe = "webview frame \(bridge.webView.frame) in window: \(bridge.webView.window != nil) hidden: \(bridge.webView.isHiddenOrHasHiddenAncestor) js: \((try? await bridge.evaluate(js)) as? String ?? "-")"
@@ -108,6 +122,15 @@ private struct DebugHooks: ViewModifier {
 
     private func stateDescription() -> String {
         var lines: [String] = []
+        if let toolbar = window.hostWindow?.toolbar {
+            let visible = Set((toolbar.visibleItems ?? []).map(\.itemIdentifier))
+            lines.append("detail width: \(window.detailWidth)")
+            lines.append("toolbar:")
+            for item in toolbar.items {
+                let frame = item.view?.frame ?? .zero
+                lines.append("  \(item.itemIdentifier.rawValue) priority:\(item.visibilityPriority.rawValue) visible:\(visible.contains(item.itemIdentifier)) \(item.label) width:\(frame.width) x:\(frame.minX)")
+            }
+        }
         switch window.phase {
         case .disconnected: lines.append("phase: disconnected, selected: \(window.selectedServerIDs.sorted())")
         case .connecting(let s): lines.append("phase: connecting to \(s.displayName)")

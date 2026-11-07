@@ -5,8 +5,8 @@ line outside this comment is one bullet; a leading "-", "*" or "•" is stripped
 Links can be written as [label](https://…).
 -->
 
-- A new app icon.
-- The server list and the file list are tinted with the accent colour.
-- When the connection drops, Edith offers to reconnect and keeps your open tabs and unsaved changes.
-- A failed or cancelled download no longer destroys the local copy of a file that is open in a tab.
-- If servers.json is damaged, Edith says so at launch instead of showing an empty list.
+- The whole sidebar is tinted with the accent colour. Settings ▸ Files can turn the tint off.
+- The breadcrumbs follow the back and forward buttons. Long paths hide their middle folders behind a menu instead of disappearing.
+- Edith starts disconnected. To reconnect to the last server, folder and tabs on launch, turn that on in Settings ▸ Files.
+- The button that shows file details has an info icon.
+- Fixed a crash after closing a window.

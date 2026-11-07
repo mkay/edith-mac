@@ -25,7 +25,7 @@ struct FileSidebar: View {
                     .help(browser.showHidden ? String(localized: "Hide hidden files") : String(localized: "Show hidden files"))
                 Spacer()
                 if browser.isLoading { ProgressView().controlSize(.small) }
-                Toggle("Details", systemImage: window.showFileDetails ? "tablecells.fill" : "tablecells", isOn: $window.showFileDetails)
+                Toggle("Details", systemImage: window.showFileDetails ? "info.circle.fill" : "info.circle", isOn: $window.showFileDetails)
                     .help(window.showFileDetails ? String(localized: "Show names only") : String(localized: "Show size, date, permissions and owner"))
             }
             .labelStyle(.iconOnly)

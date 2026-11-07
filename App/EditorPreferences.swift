@@ -34,7 +34,7 @@ struct EditorPreferences: Equatable {
     /// `file_associations` hold desktop ids, so the Mac keeps its own key.
     var appAssociations: [String: String] = [:]
     /// Reconnect to the last server, folder and tabs on launch.
-    var restoreSession = true
+    var restoreSession = false
     /// A faint accent tint behind the server list and file list.
     var tintSidebar = true
 
